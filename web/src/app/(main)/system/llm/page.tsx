@@ -31,6 +31,8 @@ import { api } from "@/lib/api";
 import type { LLMPoolMember, LLMPoolStatus, LLMProfile, LLMRetryOverride } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
+import { ChatGPTConnect } from "./_components/chatgpt-connect";
+import { OpenRouterConnect } from "./_components/openrouter-connect";
 import { ProfileRetryFields, RetryPolicyPanel, ZERO_OVERRIDE } from "./_components/retry";
 
 // 思考开关(thinking.type)与思考强度(reasoning_effort)是两个【互相独立】的字段，
@@ -259,6 +261,8 @@ function ProfileSheet({
 }) {
   const t = useTranslations("llmPage");
   const isNew = !profile;
+  const chatgpt = useTranslations("chatgptOAuth");
+  const managed = Boolean(profile?.auth_account_id);
   const [name, setName] = React.useState("");
   const [format, setFormat] = React.useState<"anthropic" | "openai" | "openai-responses">("anthropic");
   const [model, setModel] = React.useState("");
@@ -444,6 +448,11 @@ function ProfileSheet({
         </SheetHeader>
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4">
+          {managed && (
+            <p className="text-muted-foreground text-sm">
+              {chatgpt("managed")} {profile?.auth_account_label}
+            </p>
+          )}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="p-name">{t("profile.name.label")}</Label>
@@ -456,7 +465,11 @@ function ProfileSheet({
             </div>
             <div className="grid gap-2">
               <Label>{t("profile.format.label")}</Label>
-              <Select value={format} onValueChange={(v) => setFormat(v as "anthropic" | "openai" | "openai-responses")}>
+              <Select
+                disabled={managed}
+                value={format}
+                onValueChange={(v) => setFormat(v as "anthropic" | "openai" | "openai-responses")}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder={t("profile.format.placeholder")} />
                 </SelectTrigger>
@@ -520,6 +533,7 @@ function ProfileSheet({
             <Label htmlFor="p-base-url">{t("profile.baseUrl.label")}</Label>
             <Input
               id="p-base-url"
+              disabled={managed}
               className="font-mono"
               placeholder="https://api.openai.com/v1"
               value={baseUrl}
@@ -531,6 +545,7 @@ function ProfileSheet({
             <Label htmlFor="p-proxy">{t("profile.proxy.label")}</Label>
             <Input
               id="p-proxy"
+              disabled={managed}
               className="font-mono"
               placeholder="socks5://user:pass@127.0.0.1:1080 · http://127.0.0.1:8080"
               value={proxy}
@@ -543,6 +558,7 @@ function ProfileSheet({
             <Label htmlFor="p-session-header">{t("profile.sessionHeader.label")}</Label>
             <Input
               id="p-session-header"
+              disabled={managed}
               className="font-mono"
               placeholder={t("profile.sessionHeader.placeholder")}
               value={sessionHeaderKey}
@@ -557,6 +573,7 @@ function ProfileSheet({
             <Label htmlFor="p-api-key">API Key</Label>
             <Input
               id="p-api-key"
+              disabled={managed}
               type="password"
               placeholder={keyHint ? t("profile.apiKey.placeholderSet", { hint: keyHint }) : "sk-…"}
               value={apiKey}
@@ -616,7 +633,12 @@ function ProfileSheet({
                 <Label className="text-sm">{t("profile.streaming.label")}</Label>
                 <p className="text-muted-foreground text-xs">{t("profile.streaming.hint")}</p>
               </div>
-              <Switch checked={streaming} onCheckedChange={setStreaming} aria-label={t("profile.streaming.aria")} />
+              <Switch
+                disabled={managed}
+                checked={streaming}
+                onCheckedChange={setStreaming}
+                aria-label={t("profile.streaming.aria")}
+              />
             </div>
           </div>
 
@@ -724,6 +746,7 @@ function ProfileSheet({
 
 export default function LLMPage() {
   const t = useTranslations("llmPage");
+  const chatgpt = useTranslations("chatgptOAuth");
   const [profiles, setProfiles] = React.useState<LLMProfile[]>([]);
   const [pool, setPool] = React.useState<LLMPoolStatus | null>(null);
   const [poolOpen, setPoolOpen] = React.useState(false);
@@ -739,6 +762,8 @@ export default function LLMPage() {
   // 一个配置在卡片上显示的「是否正常」。没填 Key 的配置根本发不出请求，比熔断更该先说。
   const healthOf = React.useCallback(
     (p: LLMProfile, m?: LLMPoolMember): Health => {
+      if (p.auth_account_id && !p.auth_connected)
+        return { label: chatgpt("reconnect"), cls: "border-destructive/50 text-destructive" };
       if (!p.api_key_hint) {
         return {
           label: t("health.noKey.label"),
@@ -765,7 +790,7 @@ export default function LLMPage() {
       }
       return { label: t("health.ok"), cls: "border-emerald-500/50 text-emerald-600 dark:text-emerald-400" };
     },
-    [t],
+    [t, chatgpt],
   );
 
   const loadPool = React.useCallback(async () => {
@@ -844,6 +869,8 @@ export default function LLMPage() {
         </div>
       </div>
 
+      <OpenRouterConnect />
+      <ChatGPTConnect onSaved={() => void load()} />
       <Tabs defaultValue="profiles" className="flex-1">
         <TabsList>
           <TabsTrigger value="profiles">{t("page.tab.profiles")}</TabsTrigger>
@@ -896,6 +923,11 @@ export default function LLMPage() {
 
                     <div className="flex flex-wrap gap-x-3 gap-y-0.5 pl-6 text-muted-foreground text-xs">
                       {p.api_key_hint && <span>{p.api_key_hint}</span>}
+                      {p.auth_account_id && (
+                        <span>
+                          {p.auth_account_label} · {p.auth_connected ? chatgpt("usingPlan") : chatgpt("reconnect")}
+                        </span>
+                      )}
                       <span>
                         {p.rate_per_second}/s · {p.rate_per_minute}/min
                       </span>

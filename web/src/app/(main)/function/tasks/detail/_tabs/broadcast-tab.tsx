@@ -157,13 +157,14 @@ function prettyPayload(raw: string | undefined, emptyLabel: string): string {
   }
 }
 
-const dayFmt = new Intl.DateTimeFormat(getDateLocale(), { month: "long", day: "numeric", weekday: "short" });
-const clockFmt = new Intl.DateTimeFormat(getDateLocale(), {
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
-  hour12: false,
-});
+const dayFmt = () => new Intl.DateTimeFormat(getDateLocale(), { month: "long", day: "numeric", weekday: "short" });
+const clockFmt = () =>
+  new Intl.DateTimeFormat(getDateLocale(), {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
 
 function NodeStateBadge({ node }: { node: TaskNode }) {
   const t = useTranslations("taskDetail.broadcastTab");
@@ -346,7 +347,7 @@ function BroadcastRow({
     <div className={cn("relative grid grid-cols-[4.5rem_1.75rem_1fr] gap-x-2", fresh && "bg-primary/5")}>
       {/* 时间列 */}
       <div className="py-3 text-right text-xs text-muted-foreground tabular-nums">
-        <div>{Number.isNaN(ts) ? "--:--:--" : clockFmt.format(ts)}</div>
+        <div>{Number.isNaN(ts) ? "--:--:--" : clockFmt().format(ts)}</div>
         <div className="text-[11px] opacity-70">{relTime(ts, now)}</div>
       </div>
 
@@ -416,7 +417,7 @@ function BroadcastRow({
               </div>
             )}
             <div>
-              <div className="mb-1.5 text-xs font-medium text-muted-foreground">payload</div>
+              <div className="mb-1.5 text-xs font-medium text-muted-foreground">{t("labels.payload")}</div>
               <pre className="max-h-64 overflow-auto rounded-md border bg-background p-3 font-mono text-xs whitespace-pre-wrap">
                 {prettyPayload(node.payload, t("noPayload"))}
               </pre>
@@ -557,7 +558,7 @@ export function BroadcastTab({ taskId }: { taskId: string }) {
   const groups: Array<{ day: string; rows: TaskNode[] }> = [];
   for (const node of items) {
     const ts = Date.parse(node.ts);
-    const day = Number.isNaN(ts) ? t("unknownDay") : dayFmt.format(ts);
+    const day = Number.isNaN(ts) ? t("unknownDay") : dayFmt().format(ts);
     const last = groups[groups.length - 1];
     if (last && last.day === day) last.rows.push(node);
     else groups.push({ day, rows: [node] });

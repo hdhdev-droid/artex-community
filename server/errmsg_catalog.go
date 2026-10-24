@@ -5,6 +5,24 @@ package server
 // from the Korean source + translations; do not edit by hand. "ko" is the key
 // itself and is not stored. See errmsg_i18n.go (trMsg) for lookup.
 var errCatalog = map[string]map[string]string{
+	"진단 서비스 연결을 설정하세요": {
+		"en": "Configure the assessment service connection.",
+		"zh": "请配置诊断服务连接。",
+		"es": "Configure la conexión al servicio de diagnóstico.",
+		"ja": "診断サービスの接続を設定してください。",
+	},
+	"진단 검토 저장소 상태를 확인하지 못했습니다": {
+		"en": "Could not check candidate review storage.",
+		"zh": "无法检查候选审核存储状态。",
+		"es": "No se pudo comprobar el almacenamiento de revisiones.",
+		"ja": "候補レビューの保存先を確認できませんでした。",
+	},
+	"후보 검토 저장소가 준비되지 않았습니다. 현재 설치에서는 AI 검토와 이어하기를 사용할 수 없습니다": {
+		"en": "Candidate review storage is unavailable. AI review and resumption are disabled in this installation.",
+		"zh": "候选审核存储不可用。此安装无法使用AI审核和继续功能。",
+		"es": "El almacenamiento de revisiones no está disponible. La revisión con IA y su continuación están desactivadas.",
+		"ja": "候補レビューの保存先が未準備です。この環境ではAIレビューと再開を利用できません。",
+	},
 	"인증이 필요합니다":                           {"en": "Authentication is required", "zh": "需要身份验证", "es": "Se requiere autenticación", "ja": "認証が必要です"},
 	"token 이 유효하지 않거나 만료되었습니다":            {"en": "The token is invalid or has expired", "zh": "token 无效或已过期", "es": "El token no es válido o ha caducado", "ja": "token が無効か、有効期限が切れています"},
 	"비밀번호가 이미 설정되어 있습니다":                  {"en": "A password has already been set", "zh": "密码已设置", "es": "Ya se ha establecido una contraseña", "ja": "パスワードは既に設定されています"},

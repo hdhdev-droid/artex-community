@@ -39,6 +39,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { getDateLocale } from "@/i18n/datetime";
 import { ApiError, api } from "@/lib/api";
+import { useBuiltinDescriptions } from "@/lib/builtin-description-i18n";
 import type { Agent, MCPServer, MissingSkill, SkillCall, SkillItem } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -303,6 +304,7 @@ function SkillsOverview({
 // ── Page ──────────────────────────────────────────────────────────────────
 export default function SkillsPage() {
   const t = useTranslations("skillsPage");
+  const descriptions = useBuiltinDescriptions();
   const [skills, setSkills] = React.useState<SkillItem[]>([]);
   const [agents, setAgents] = React.useState<Agent[]>([]);
   const [selected, setSelected] = React.useState<Selected | null>(null);
@@ -1016,12 +1018,14 @@ export default function SkillsPage() {
               <div>
                 <h2 className="font-mono text-base font-semibold">{selectedSkill.name}</h2>
                 {selectedSkill.description && (
-                  <p className="mt-1 text-sm text-muted-foreground">{selectedSkill.description}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {descriptions.skill(selectedSkill.name, selectedSkill.description)}
+                  </p>
                 )}
                 <div className="mt-2 flex flex-wrap gap-2">
                   {selectedSkill.license && (
                     <Badge variant="outline" className="text-xs font-normal">
-                      License: {selectedSkill.license}
+                      {t("labels.license")}: {selectedSkill.license}
                     </Badge>
                   )}
                   {selectedSkill.compatibility && (
@@ -1266,7 +1270,7 @@ export default function SkillsPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="grid gap-1.5">
-                  <Label className="text-muted-foreground text-xs">license</Label>
+                  <Label className="text-muted-foreground text-xs">{t("labels.license")}</Label>
                   <Input
                     placeholder="MIT / Proprietary"
                     value={newLicense}
@@ -1274,7 +1278,7 @@ export default function SkillsPage() {
                   />
                 </div>
                 <div className="grid gap-1.5">
-                  <Label className="text-muted-foreground text-xs">compatibility</Label>
+                  <Label className="text-muted-foreground text-xs">{t("labels.compatibility")}</Label>
                   <Input
                     placeholder={t("compatPlaceholder")}
                     value={newCompat}

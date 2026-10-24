@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 
 import { useTranslations } from "next-intl";
 
+import { OnboardingReturn } from "@/components/onboarding-entry";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -81,6 +82,7 @@ export function MainContent({ children }: { children: ReactNode }) {
         </div>
       </header>
       <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden p-4 has-data-[content-padding=false]:p-0 md:p-6 md:has-data-[content-padding=false]:p-0">
+        <OnboardingReturn />
         {children}
       </div>
     </>

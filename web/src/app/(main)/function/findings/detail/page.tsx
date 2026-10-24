@@ -10,6 +10,8 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { CopyButton } from "@/components/copy-button";
+import { FindingDefensePanel } from "@/components/finding-defense-panel";
+import { FindingInvestigationPanel } from "@/components/finding-investigation-panel";
 import { FindingRetestPanel } from "@/components/finding-retest-panel";
 import { FindingTrafficPanel } from "@/components/finding-traffic-panel";
 import { Markdown } from "@/components/markdown";
@@ -61,8 +63,14 @@ function FindingDetailInner() {
   const contextTaskId = searchParams.get("context_task") ?? "";
   const [finding, setFinding] = React.useState<Finding | null>(null);
   const [loaded, setLoaded] = React.useState(false);
-  const [tab, setTab] = React.useState("overview");
+  const [tab, setTab] = React.useState(
+    ["defense", "investigation"].includes(searchParams.get("tab") ?? "")
+      ? (searchParams.get("tab") ?? "overview")
+      : "overview",
+  );
   const t = useTranslations("findings");
+  const tPurple = useTranslations("purple");
+  const tInvestigation = useTranslations("investigation");
   const tStatus = useTranslations("status");
 
   const load = React.useCallback(() => {
@@ -156,12 +164,30 @@ function FindingDetailInner() {
         </div>
         <TabsList>
           <TabsTrigger value="overview">{t("detail.tab.overview")}</TabsTrigger>
+          <TabsTrigger value="defense">{tPurple("title")}</TabsTrigger>
+          <TabsTrigger value="investigation">{tInvestigation("title")}</TabsTrigger>
           <TabsTrigger value="lineage">{t("detail.tab.lineage")}</TabsTrigger>
         </TabsList>
       </header>
 
       {/* Tab content */}
       <div className="flex-1 p-4 lg:p-6">
+        <TabsContent value="defense" className="mt-0">
+          <FindingDefensePanel
+            key={id}
+            findingId={id}
+            readOnly={finding.inherited}
+            onOpenRetest={() => setTab("overview")}
+          />
+        </TabsContent>
+        <TabsContent value="investigation" className="mt-0">
+          <FindingInvestigationPanel
+            key={id}
+            findingId={id}
+            readOnly={finding.inherited}
+            onOpenDefense={() => setTab("defense")}
+          />
+        </TabsContent>
         {/* 概览：左（摘要 + 证据）/ 右（状态区） */}
         <TabsContent value="overview" className="mt-0">
           <div className="grid gap-4 lg:grid-cols-3">

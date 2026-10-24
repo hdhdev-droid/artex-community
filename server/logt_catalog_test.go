@@ -15,11 +15,13 @@ import (
 )
 
 // TestLogTTemplatesHaveTranslations pins that every logT("…") template in this
-// package has an en/zh/es entry in config's log catalog. config.T falls back to
-// the Korean source on a miss, so a key that drifts by one character (spacing,
-// an escaped quote) would otherwise ship Korean console logs to non-Korean
-// operators without any test noticing.
+// package has translations outside its source language. Both Korean originals
+// and Chinese upstream originals are supported by config.T; an unknown template
+// must still fail instead of silently shipping untranslated console logs.
 func TestLogTTemplatesHaveTranslations(t *testing.T) {
+	previous := config.CurrentLanguage
+	t.Cleanup(func() { config.CurrentLanguage = previous })
+	config.CurrentLanguage = nil // Exercise startup fallback independently of prior Server instances.
 	files, err := filepath.Glob("*.go")
 	if err != nil {
 		t.Fatal(err)
@@ -43,7 +45,7 @@ func TestLogTTemplatesHaveTranslations(t *testing.T) {
 				return true
 			}
 			// A plain literal is the template itself. A computed argument (e.g. a
-			// map lookup) is checked through every Hangul literal it contains.
+			// map lookup) is checked through every Hangul/Han literal it contains.
 			found := 0
 			ast.Inspect(call.Args[0], func(n ast.Node) bool {
 				lit, ok := n.(*ast.BasicLit)
@@ -54,14 +56,16 @@ func TestLogTTemplatesHaveTranslations(t *testing.T) {
 				if err != nil {
 					t.Fatalf("%s: %v", fset.Position(lit.Pos()), err)
 				}
-				if strings.IndexFunc(s, func(r rune) bool { return unicode.Is(unicode.Hangul, r) }) >= 0 {
+				if strings.IndexFunc(s, func(r rune) bool {
+					return unicode.Is(unicode.Hangul, r) || unicode.Is(unicode.Han, r)
+				}) >= 0 {
 					keys = append(keys, s)
 					found++
 				}
 				return true
 			})
 			if found == 0 {
-				t.Errorf("%s: no Korean template literal found in logT argument", fset.Position(call.Pos()))
+				t.Errorf("%s: no Korean or Chinese template literal found in logT argument", fset.Position(call.Pos()))
 			}
 			return true
 		})
@@ -69,13 +73,30 @@ func TestLogTTemplatesHaveTranslations(t *testing.T) {
 	if len(keys) == 0 {
 		t.Fatal("found no logT call sites; the scan is broken")
 	}
-	for _, lang := range []string{"en", "zh", "es"} {
+	for _, lang := range []string{"ko", "en", "zh", "es", "ja"} {
 		t.Setenv("ARTEX_LANG", lang)
 		for _, k := range keys {
+			sourceLanguage := "zh"
+			if strings.IndexFunc(k, func(r rune) bool { return unicode.Is(unicode.Hangul, r) }) >= 0 {
+				sourceLanguage = "ko"
+			}
+			if lang == sourceLanguage {
+				continue
+			}
 			if config.T(k) == k {
 				t.Errorf("logT template has no %s translation: %q", lang, k)
 			}
 		}
+	}
+}
+
+func TestLogTUsesRuntimeLanguageAfterStartup(t *testing.T) {
+	previous := config.CurrentLanguage
+	t.Cleanup(func() { config.CurrentLanguage = previous })
+	t.Setenv("ARTEX_LANG", "ko")
+	config.CurrentLanguage = func() string { return "en" }
+	if got := logT("[config] 설정 파일: %s"); got != "[config] config file: %s" {
+		t.Fatalf("runtime language was ignored: %q", got)
 	}
 }
 

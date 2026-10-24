@@ -245,6 +245,9 @@ WHERE t.id=$1 AND t.deleted_at IS NULL FOR UPDATE OF t`, taskID).Scan(
 	if !paused && !IsTerminal(status) {
 		return nil, ErrTaskArchiveIneligible
 	}
+	if err := ensureDefenseExecutionsFinishedTx(tx, taskID); err != nil {
+		return nil, err
+	}
 	var dependent int64
 	err = tx.QueryRow(`SELECT child.id FROM task_relations relation
 JOIN tasks child ON child.id=relation.task_id AND child.deleted_at IS NULL
@@ -569,6 +572,9 @@ func (d *DB) snapshotTaskArchive(taskID int64, llmRecords io.Writer) (*TaskArchi
 		}
 		return nil, err
 	}
+	if err := ensureDefenseExecutionsFinishedTx(tx, taskID); err != nil {
+		return nil, err
+	}
 	tables := make(map[string]json.RawMessage)
 	queries := []struct {
 		name  string
@@ -587,6 +593,13 @@ func (d *DB) snapshotTaskArchive(taskID int64, llmRecords io.Writer) (*TaskArchi
 		{"task_llm_profiles", `SELECT * FROM task_llm_profiles WHERE task_id=$1 ORDER BY position`, []any{taskID}},
 		{"task_scope", `SELECT * FROM task_scope WHERE task_id=$1 ORDER BY id`, []any{taskID}},
 		{"findings", `SELECT * FROM findings WHERE task_id=$1 ORDER BY id`, []any{taskID}},
+		{"finding_defense_plans", `SELECT p.* FROM finding_defense_plans p JOIN findings f ON f.id=p.finding_id WHERE f.task_id=$1 ORDER BY p.finding_id`, []any{taskID}},
+		{"finding_defense_validations", `SELECT v.* FROM finding_defense_validations v JOIN findings f ON f.id=v.finding_id WHERE f.task_id=$1 ORDER BY v.id`, []any{taskID}},
+		{"finding_defense_replays", `SELECT r.* FROM finding_defense_replays r JOIN findings f ON f.id=r.finding_id WHERE f.task_id=$1 ORDER BY r.id`, []any{taskID}},
+		{"finding_defense_executions", `SELECT e.* FROM finding_defense_executions e JOIN findings f ON f.id=e.finding_id WHERE f.task_id=$1 ORDER BY e.id`, []any{taskID}},
+		{"finding_defense_assessments", `SELECT a.* FROM finding_defense_assessments a JOIN findings f ON f.id=a.finding_id WHERE f.task_id=$1 ORDER BY a.id`, []any{taskID}},
+		{"finding_investigations", `SELECT i.* FROM finding_investigations i JOIN findings f ON f.id=i.finding_id WHERE f.task_id=$1 ORDER BY i.id`, []any{taskID}},
+		{"finding_investigation_runs", `SELECT r.* FROM finding_investigation_runs r JOIN findings f ON f.id=r.finding_id WHERE f.task_id=$1 ORDER BY r.id`, []any{taskID}},
 		{"finding_traffic_bindings", `SELECT b.* FROM finding_traffic_bindings b JOIN findings f ON f.id=b.finding_id WHERE f.task_id=$1 ORDER BY b.finding_id,b.position,b.id`, []any{taskID}},
 		{"traffic_evidence_snapshots", `SELECT s.* FROM traffic_evidence_snapshots s WHERE EXISTS(SELECT 1 FROM finding_traffic_bindings b JOIN findings f ON f.id=b.finding_id WHERE b.snapshot_id=s.id AND f.task_id=$1) ORDER BY s.id`, []any{taskID}},
 		{"llm_records", `SELECT * FROM llm_records WHERE COALESCE(task_id,'')=$1 ORDER BY id`, []any{strconv.FormatInt(taskID, 10)}},
@@ -784,4 +797,23 @@ func jsonInt64(value any) (int64, bool) {
 	default:
 		return 0, false
 	}
+}
+
+// Defense retests run in independent conversations. The task lock held while
+// queueing serializes this check with creation; queued tasks reject new runs.
+func ensureDefenseExecutionsFinishedTx(tx *sql.Tx, taskID int64) error {
+	var active bool
+	if err := tx.QueryRow(`SELECT EXISTS(SELECT 1 FROM finding_defense_executions e JOIN findings f ON f.id=e.finding_id JOIN finding_retests r ON r.id=e.retest_id WHERE f.task_id=$1 AND r.status IN ('pending','running'))`, taskID).Scan(&active); err != nil {
+		return err
+	}
+	if active {
+		return fmt.Errorf("%w: 방어 검증 재검증을 종료한 뒤 작업을 보관해 주세요", ErrTaskArchiveState)
+	}
+	if err := tx.QueryRow(`SELECT EXISTS(SELECT 1 FROM finding_investigation_runs r JOIN findings f ON f.id=r.finding_id WHERE f.task_id=$1 AND r.status IN ('queued','running'))`, taskID).Scan(&active); err != nil {
+		return err
+	}
+	if active {
+		return fmt.Errorf("%w: 침해 조사를 종료한 뒤 작업을 보관해 주세요", ErrTaskArchiveState)
+	}
+	return nil
 }

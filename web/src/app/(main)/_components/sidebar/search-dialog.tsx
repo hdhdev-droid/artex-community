@@ -157,7 +157,7 @@ export function SearchDialog() {
           <span className="text-xs">⌘</span>J
         </kbd>
       </Button>
-      <CommandDialog open={open} onOpenChange={handleOpenChange}>
+      <CommandDialog title={t("button")} description={t("placeholder")} open={open} onOpenChange={handleOpenChange}>
         <Command>
           <CommandInput placeholder={t("placeholder")} value={query} onValueChange={setQuery} />
           <CommandList>

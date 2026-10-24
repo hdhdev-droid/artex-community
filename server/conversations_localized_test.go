@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/Autumn-27/artex/config"
 )
 
 // conversations.go 의 대화(채팅) API 에러 응답을 한국어로 유지하는 회귀 방어 테스트다.
@@ -107,6 +109,9 @@ func TestConversationRetestReasonsLocalized(t *testing.T) {
 // (라벨 없음)과 작업 메인 에이전트("메인 에이전트") 두 호출이 같은 "(…오류: …)" 형태로
 // 나오고, 안쪽 err 원문은 그대로 보존되며 래퍼에 중국어 한자·전각 부호가 없어야 한다.
 func TestTranscriptErrorSummaryLocalized(t *testing.T) {
+	previous := config.CurrentLanguage
+	config.CurrentLanguage = func() string { return "ko" }
+	t.Cleanup(func() { config.CurrentLanguage = previous })
 	cases := []struct {
 		name  string
 		label string

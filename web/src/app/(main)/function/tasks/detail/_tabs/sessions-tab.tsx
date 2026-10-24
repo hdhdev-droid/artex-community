@@ -51,6 +51,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSideQuestions } from "@/hooks/use-side-questions";
+import { getDateLocale } from "@/i18n/datetime";
 import { api, sseUrl } from "@/lib/api";
 import { shouldSubmitOnKey, useChatSendMode } from "@/lib/chat-send-mode";
 import { MOCK } from "@/lib/mock/enabled";
@@ -1696,10 +1697,10 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                 </TooltipTrigger>
                 <TooltipContent>
                   {t("tokens.full", {
-                    input: taskTokens.input_tokens.toLocaleString(),
-                    output: taskTokens.output_tokens.toLocaleString(),
-                    cacheRead: taskTokens.cache_read_tokens.toLocaleString(),
-                    cacheWrite: taskTokens.cache_write_tokens.toLocaleString(),
+                    input: taskTokens.input_tokens.toLocaleString(getDateLocale()),
+                    output: taskTokens.output_tokens.toLocaleString(getDateLocale()),
+                    cacheRead: taskTokens.cache_read_tokens.toLocaleString(getDateLocale()),
+                    cacheWrite: taskTokens.cache_write_tokens.toLocaleString(getDateLocale()),
                   })}
                 </TooltipContent>
               </Tooltip>
@@ -1886,10 +1887,10 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                     </TooltipTrigger>
                     <TooltipContent>
                       {t("tokens.full", {
-                        input: activeTokens.input_tokens.toLocaleString(),
-                        output: activeTokens.output_tokens.toLocaleString(),
-                        cacheRead: activeTokens.cache_read_tokens.toLocaleString(),
-                        cacheWrite: activeTokens.cache_write_tokens.toLocaleString(),
+                        input: activeTokens.input_tokens.toLocaleString(getDateLocale()),
+                        output: activeTokens.output_tokens.toLocaleString(getDateLocale()),
+                        cacheRead: activeTokens.cache_read_tokens.toLocaleString(getDateLocale()),
+                        cacheWrite: activeTokens.cache_write_tokens.toLocaleString(getDateLocale()),
                       })}
                     </TooltipContent>
                   </Tooltip>

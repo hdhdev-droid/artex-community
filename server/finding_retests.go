@@ -93,41 +93,7 @@ func (s *Server) startFindingRetest(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 400, errFindingRetestNotesTooLong)
 		return
 	}
-	f, err := pg.GetFinding(id)
-	if err != nil {
-		writeErr(w, 500, err.Error())
-		return
-	}
-	if f == nil {
-		writeErr(w, 404, "finding not found")
-		return
-	}
-	a, err := pg.GetAgentByKey(db.FindingRetestAgentKey)
-	if err != nil {
-		writeErr(w, 500, err.Error())
-		return
-	}
-	if a == nil || !a.Enabled {
-		writeErr(w, 409, errFindingRetestAgentMissing)
-		return
-	}
-	for _, key := range []string{"get_finding_retest_context", "record_finding_retest_result"} {
-		t, err := pg.GetTool(key)
-		if err != nil {
-			writeErr(w, 500, err.Error())
-			return
-		}
-		if t == nil || !t.Enabled || !slices.Contains(t.Agents, a.Key) {
-			writeErr(w, 409, errFindingRetestToolRequired+key)
-			return
-		}
-	}
-	if s.resolveChatAgent(&db.Conversation{AgentKey: a.Key}) == nil {
-		writeErr(w, 503, s.chatUnavailableReason())
-		return
-	}
-	if s.ctx.Err() != nil {
-		writeErr(w, 503, errFindingRetestServiceStopping)
+	if !s.findingRetestReady(w, r, pg, id) {
 		return
 	}
 	retest, conv, created, err := pg.CreateFindingRetest(r.Context(), id, req.Notes)
@@ -140,17 +106,64 @@ func (s *Server) startFindingRetest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if created {
-		busyKey := s.convBusyKey(conv.ID)
-		s.chatMu.Lock()
-		s.chatBusy[busyKey] = true
-		s.chatMu.Unlock()
-		s.runConversation(conv, retest.InitialMessage(), busyKey)
+		s.dispatchFindingRetest(retest, conv)
 	}
 	code := http.StatusOK
 	if created {
 		code = http.StatusAccepted
 	}
 	writeJSON(w, code, map[string]any{"retest": retest, "created": created})
+}
+
+// Keep ordinary and defense-linked retests on the same configured ARTEX agent,
+// required tools, model availability checks, and conversation runner.
+func (s *Server) findingRetestReady(w http.ResponseWriter, r *http.Request, pg *db.DB, id int64) bool {
+	f, err := pg.GetFinding(id)
+	if err != nil {
+		writeErr(w, 500, err.Error())
+		return false
+	}
+	if f == nil {
+		writeErr(w, 404, "finding not found")
+		return false
+	}
+	a, err := pg.GetAgentByKey(db.FindingRetestAgentKey)
+	if err != nil {
+		writeErr(w, 500, err.Error())
+		return false
+	}
+	if a == nil || !a.Enabled {
+		writeErr(w, 409, errFindingRetestAgentMissing)
+		return false
+	}
+	for _, key := range []string{"get_finding_retest_context", "record_finding_retest_result"} {
+		t, err := pg.GetTool(key)
+		if err != nil {
+			writeErr(w, 500, err.Error())
+			return false
+		}
+		if t == nil || !t.Enabled || !slices.Contains(t.Agents, a.Key) {
+			writeErr(w, 409, errFindingRetestToolRequired+key)
+			return false
+		}
+	}
+	if s.resolveChatAgent(&db.Conversation{AgentKey: a.Key}) == nil {
+		writeErr(w, 503, s.chatUnavailableReason())
+		return false
+	}
+	if s.ctx.Err() != nil {
+		writeErr(w, 503, errFindingRetestServiceStopping)
+		return false
+	}
+	return true
+}
+
+func (s *Server) dispatchFindingRetest(retest *db.FindingRetest, conv *db.Conversation) {
+	busyKey := s.convBusyKey(conv.ID)
+	s.chatMu.Lock()
+	s.chatBusy[busyKey] = true
+	s.chatMu.Unlock()
+	s.runConversation(conv, retest.InitialMessage(), busyKey)
 }
 
 // Both tools derive the finding from server-owned conversation context. Tool
@@ -179,7 +192,16 @@ func (s *Server) findingRetestTools() []actool.CoreTool {
 						}
 					}
 				}
-				return jsonResult(map[string]any{"retest": r, "current_constraints": constraints})
+				out := map[string]any{"retest": r, "current_constraints": constraints}
+				execution, err := s.m.pg.DefenseExecutionForRetest(ctx, r.ID)
+				if err != nil {
+					return actool.Errorf("防御验证执行上下文暂不可用"), nil
+				}
+				if execution != nil {
+					out["defense_execution"] = map[string]any{"id": strconv.FormatInt(execution.ID, 10), "correlation_id": execution.CorrelationID,
+						"header_name": "X-ARTEX-Verification-ID", "header_value": execution.CorrelationID}
+				}
+				return jsonResult(out)
 			}),
 		wrTool("record_finding_retest_result", "为当前复测会话保存唯一结论；原漏洞证据与报告保持不变。会话成功结束且结论为 fixed 时，系统自动将漏洞状态改为已修复；其他结论保留原状态。必须提供本次实际检查的证据，无法确认时写明阻塞原因。",
 			objSchema(map[string]any{

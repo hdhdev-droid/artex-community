@@ -5,6 +5,7 @@ import * as React from "react";
 
 import { AppSidebar } from "@/app/(main)/_components/sidebar/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { syncServerLocale } from "@/i18n/server-locale";
 import { auth } from "@/lib/auth";
 import { getClientCookie } from "@/lib/cookie.client";
 import {
@@ -44,6 +45,20 @@ export default function Layout({ children }: Readonly<{ children: ReactNode }>) 
       window.location.href = "/login";
     }
   }, []);
+
+  React.useEffect(() => {
+    if (!authed) return;
+    const sync = () => {
+      if (document.visibilityState === "visible") void syncServerLocale().catch(() => undefined);
+    };
+    sync();
+    window.addEventListener("focus", sync);
+    document.addEventListener("visibilitychange", sync);
+    return () => {
+      window.removeEventListener("focus", sync);
+      document.removeEventListener("visibilitychange", sync);
+    };
+  }, [authed]);
 
   const defaultOpen = typeof document === "undefined" ? true : getClientCookie("sidebar_state") !== "false";
   const variant = readPref<SidebarVariant>(

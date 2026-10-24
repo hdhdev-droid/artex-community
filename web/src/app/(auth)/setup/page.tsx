@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { useTranslations } from "next-intl";
 
+import { SetupLanguage } from "@/components/setup-language";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,7 +59,7 @@ export default function SetupPage() {
     try {
       const { token } = await api.initPassword(password, setupToken.trim());
       auth.setToken(token);
-      router.replace("/function/tasks");
+      router.replace("/onboarding");
     } catch (err) {
       setError(err instanceof Error ? err.message : t("setup.errorInit"));
     } finally {
@@ -84,6 +85,7 @@ export default function SetupPage() {
       {/* Right panel */}
       <div className="flex w-full items-center justify-center bg-background p-8 lg:w-2/3">
         <div className="w-full max-w-md space-y-10 py-24 lg:py-32">
+          <SetupLanguage />
           <div className="space-y-4 text-center">
             <h2 className="text-2xl font-medium tracking-tight">
               {unavailable ? t("setup.unavailableTitle") : t("setup.title")}

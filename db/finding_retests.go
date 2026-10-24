@@ -28,19 +28,20 @@ var ErrRetestNotRunning = errors.New("本次复测已结束或尚未开始，请
 // FindingRetest is an immutable historical test once its conversation turn ends.
 // Snapshot is only loaded for the agent, never sent with the history list.
 type FindingRetest struct {
-	ID             int64           `json:"id"`
-	FindingID      int64           `json:"finding_id"`
-	ConversationID *int64          `json:"conversation_id"`
-	Status         string          `json:"status"`
-	Verdict        string          `json:"verdict"`
-	Notes          string          `json:"notes"`
-	Snapshot       json.RawMessage `json:"snapshot,omitempty"`
-	Summary        string          `json:"summary"`
-	Evidence       string          `json:"evidence"`
-	Error          string          `json:"error"`
-	CreatedAt      time.Time       `json:"created_at"`
-	StartedAt      *time.Time      `json:"started_at"`
-	FinishedAt     *time.Time      `json:"finished_at"`
+	ID                   int64           `json:"id"`
+	FindingID            int64           `json:"finding_id"`
+	ConversationID       *int64          `json:"conversation_id"`
+	Status               string          `json:"status"`
+	Verdict              string          `json:"verdict"`
+	Notes                string          `json:"notes"`
+	Snapshot             json.RawMessage `json:"snapshot,omitempty"`
+	Summary              string          `json:"summary"`
+	Evidence             string          `json:"evidence"`
+	Error                string          `json:"error"`
+	CreatedAt            time.Time       `json:"created_at"`
+	StartedAt            *time.Time      `json:"started_at"`
+	FinishedAt           *time.Time      `json:"finished_at"`
+	defenseCorrelationID string
 }
 
 const retestCols = `id, finding_id, conversation_id, status, verdict, notes, summary, evidence, error, created_at, started_at, finished_at`
@@ -86,27 +87,60 @@ func scanRetest(row interface{ Scan(...any) error }) (*FindingRetest, error) {
 // and persists the first message. A finding row lock deduplicates simultaneous
 // clicks across clients; an existing active run is returned without dispatching.
 func (d *DB) CreateFindingRetest(ctx context.Context, findingID int64, notes string) (*FindingRetest, *Conversation, bool, error) {
+	r, c, _, created, err := d.createFindingRetest(ctx, findingID, notes, nil)
+	return r, c, created, err
+}
+
+// CreateFindingRetestWithDefense associates the immutable defense execution
+// before the first conversation message is persisted or an agent is dispatched.
+// An already active retest cannot acquire a new correlation ID retroactively.
+func (d *DB) CreateFindingRetestWithDefense(ctx context.Context, findingID int64, notes string, input DefenseExecutionInput) (*FindingRetest, *Conversation, *DefenseExecution, bool, error) {
+	return d.createFindingRetest(ctx, findingID, notes, &input)
+}
+
+func (d *DB) createFindingRetest(ctx context.Context, findingID int64, notes string, defense *DefenseExecutionInput) (*FindingRetest, *Conversation, *DefenseExecution, bool, error) {
 	tx, err := d.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, nil, false, err
+		return nil, nil, nil, false, err
 	}
 	defer tx.Rollback()
+	r, c, e, created, err := createFindingRetestTx(ctx, tx, findingID, notes, defense)
+	if err != nil {
+		return nil, nil, nil, false, err
+	}
+	if err = tx.Commit(); err != nil {
+		return nil, nil, nil, false, err
+	}
+	return r, c, e, created, nil
+}
+
+// Shared transactional creation lets a live loop and its real ARTEX execution
+// become durable together, before an agent is dispatched.
+func createFindingRetestTx(ctx context.Context, tx *sql.Tx, findingID int64, notes string, defense *DefenseExecutionInput) (*FindingRetest, *Conversation, *DefenseExecution, bool, error) {
+	if defense != nil {
+		if err := LockFindingEvidenceTx(tx, findingID, nil); err != nil {
+			return nil, nil, nil, false, err
+		}
+	}
 	var title string
 	var snapshot []byte
-	err = tx.QueryRowContext(ctx, `SELECT COALESCE(NULLIF(f.name,''), NULLIF(f.vulnclass,''), '未分类'),
+	err := tx.QueryRowContext(ctx, `SELECT COALESCE(NULLIF(f.name,''), NULLIF(f.vulnclass,''), '未分类'),
 	jsonb_build_object('finding', to_jsonb(f),
 	 'assets', COALESCE((SELECT jsonb_agg(to_jsonb(a)) FROM assets a WHERE f.asset_ids @> to_jsonb(ARRAY[a.id])), '[]'::jsonb),
 	 'constraints', COALESCE((SELECT jsonb_agg(to_jsonb(c)) FROM task_constraints c JOIN tasks t ON t.exploration_id=c.exploration_id WHERE t.id=f.task_id), '[]'::jsonb))
 	FROM findings f WHERE f.id=$1 FOR UPDATE OF f`, findingID).Scan(&title, &snapshot)
 	if err != nil {
-		return nil, nil, false, err
+		return nil, nil, nil, false, err
 	}
 	r, err := scanRetest(tx.QueryRowContext(ctx, `SELECT `+retestCols+` FROM finding_retests WHERE finding_id=$1 AND status IN ('pending','running')`, findingID))
 	if err != nil {
-		return nil, nil, false, err
+		return nil, nil, nil, false, err
 	}
 	if r != nil {
-		return r, nil, false, nil
+		if defense != nil {
+			return nil, nil, nil, false, ErrDefenseConflict
+		}
+		return r, nil, nil, false, nil
 	}
 	// Keep the title within the same limit as ordinary conversations.
 	if runes := []rune(title); len(runes) > 100 {
@@ -115,29 +149,37 @@ func (d *DB) CreateFindingRetest(ctx context.Context, findingID int64, notes str
 	c, err := scanConv(tx.QueryRowContext(ctx, `INSERT INTO conversations(agent_key,title) VALUES ($1,$2) RETURNING `+convCols,
 		FindingRetestAgentKey, fmt.Sprintf("复测 #%d · %s", findingID, title)))
 	if err != nil {
-		return nil, nil, false, err
+		return nil, nil, nil, false, err
 	}
 	r, err = scanRetest(tx.QueryRowContext(ctx, `INSERT INTO finding_retests(finding_id,conversation_id,notes,snapshot) VALUES ($1,$2,$3,$4) RETURNING `+retestCols,
 		findingID, c.ID, strings.TrimSpace(notes), snapshot))
 	if err != nil {
-		return nil, nil, false, err
+		return nil, nil, nil, false, err
+	}
+	var execution *DefenseExecution
+	if defense != nil {
+		execution, err = createDefenseExecutionTx(ctx, tx, findingID, r, *defense)
+		if err != nil {
+			return nil, nil, nil, false, err
+		}
+		r.defenseCorrelationID = execution.CorrelationID
 	}
 	msg := r.InitialMessage()
 	_, err = tx.ExecContext(ctx, `INSERT INTO conversation_activities(conversation_id,worker,kind,summary,detail) VALUES ($1,$2,'user',$3,$4)`,
 		c.ID, FindingRetestAgentKey, fmt.Sprintf("请复测漏洞 #%d", findingID), msg)
 	if err != nil {
-		return nil, nil, false, err
+		return nil, nil, nil, false, err
 	}
-	if err = tx.Commit(); err != nil {
-		return nil, nil, false, err
-	}
-	return r, &c, true, nil
+	return r, &c, execution, true, nil
 }
 
 func (r *FindingRetest) InitialMessage() string {
 	msg := fmt.Sprintf("请复测漏洞 #%d。先调用 get_finding_retest_context 读取本会话关联的原始证据与约束，再执行针对性验证，最后调用 record_finding_retest_result 保存结论。", r.FindingID)
 	if r.Notes != "" {
 		msg += "\n\n本次复测补充说明：\n" + r.Notes
+	}
+	if r.defenseCorrelationID != "" {
+		msg += "\n\n本次复测已关联防御验证执行。先从 get_finding_retest_context 读取服务端提供的 defense_execution。只给已授权原目标上实际复现原漏洞触发条件的 HTTP 请求添加关联头 X-ARTEX-Verification-ID: " + r.defenseCorrelationID + "。登录、会话准备与良性对照请求不得附加这个关联 ID；它们仍应按原复测流程执行并单独记录。保留原身份、认证、请求条件和任务约束；不得为了打标扩大目标范围或改变漏洞关键条件。非 HTTP 或无法可靠附加关联头时如实说明，不伪造日志、请求、告警或阻断证明。关联标记本身不证明安全设备检测成功；检测结论由独立的安全日志采集与证据判定完成。"
 	}
 	return msg
 }
@@ -260,6 +302,9 @@ func (d *DB) FinishFindingRetest(id int64, status, reason string) error {
 		if _, _, _, _, err := SetFindingStatusTx(context.Background(), tx, findingID, FindingFixed); err != nil {
 			return err
 		}
+	}
+	if err := snapshotDefenseRetestTx(context.Background(), tx, id); err != nil {
+		return err
 	}
 	return tx.Commit()
 }

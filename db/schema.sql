@@ -1384,3 +1384,257 @@ CREATE INDEX IF NOT EXISTS idx_notification_deliveries_batch
     ON notification_deliveries(batch_id) WHERE batch_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_notification_deliveries_channel
     ON notification_deliveries(channel_id, id DESC);
+
+-- Purple-team plans and manually recorded defense observations. Only the
+-- event_filter format supports local comparisons; finding status is unchanged.
+CREATE TABLE IF NOT EXISTS finding_defense_plans (
+    finding_id BIGINT PRIMARY KEY REFERENCES findings(id) ON DELETE CASCADE,
+    revision BIGINT NOT NULL CHECK (revision > 0),
+    hypothesis TEXT NOT NULL CHECK (char_length(hypothesis) BETWEEN 1 AND 4000),
+    log_source TEXT NOT NULL DEFAULT '' CHECK (char_length(log_source) <= 2000),
+    rule_format TEXT NOT NULL CHECK (rule_format IN ('query','sigma','other')),
+    rule_text TEXT NOT NULL DEFAULT '' CHECK (char_length(rule_text) <= 32000),
+    remediation TEXT NOT NULL DEFAULT '' CHECK (char_length(remediation) <= 8000),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp()
+);
+CREATE TABLE IF NOT EXISTS finding_defense_validations (
+    id BIGSERIAL PRIMARY KEY,
+    finding_id BIGINT NOT NULL REFERENCES findings(id) ON DELETE CASCADE,
+    plan_revision BIGINT NOT NULL CHECK (plan_revision > 0),
+    evidence_version BIGINT NOT NULL CHECK (evidence_version >= 0),
+    source_fingerprint TEXT NOT NULL CHECK (source_fingerprint ~ '^[0-9a-f]{32}$'),
+    plan_snapshot JSONB NOT NULL,
+    detection TEXT NOT NULL CHECK (detection IN ('detected','missed','not_tested')),
+    prevention TEXT NOT NULL CHECK (prevention IN ('blocked','not_blocked','not_tested')),
+    evidence TEXT NOT NULL CHECK (char_length(evidence) BETWEEN 1 AND 32000),
+    notes TEXT NOT NULL DEFAULT '' CHECK (char_length(notes) <= 4000),
+    observed_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+    CHECK (detection <> 'not_tested' OR prevention <> 'not_tested')
+);
+CREATE INDEX IF NOT EXISTS idx_finding_defense_validations_history
+    ON finding_defense_validations(finding_id, id DESC);
+
+-- Expand the format constraint without replacing plans or their history.
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finding_defense_plans'::regclass AND conname='finding_defense_plans_rule_format_v2_check') THEN
+        ALTER TABLE finding_defense_plans ADD CONSTRAINT finding_defense_plans_rule_format_v2_check
+            CHECK (rule_format IN ('query','sigma','other','event_filter')) NOT VALID;
+        ALTER TABLE finding_defense_plans VALIDATE CONSTRAINT finding_defense_plans_rule_format_v2_check;
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finding_defense_plans'::regclass AND conname='finding_defense_plans_rule_format_check') THEN
+        ALTER TABLE finding_defense_plans DROP CONSTRAINT finding_defense_plans_rule_format_check;
+    END IF;
+END $$;
+
+-- Deterministic local log replays are separate from manual/live observations.
+CREATE TABLE IF NOT EXISTS finding_defense_replays (
+    id BIGSERIAL PRIMARY KEY,
+    finding_id BIGINT NOT NULL REFERENCES findings(id) ON DELETE CASCADE,
+    plan_revision BIGINT NOT NULL CHECK (plan_revision > 0),
+    evidence_version BIGINT NOT NULL CHECK (evidence_version >= 0),
+    source_fingerprint TEXT NOT NULL CHECK (source_fingerprint ~ '^[0-9a-f]{32}$'),
+    plan_snapshot JSONB NOT NULL,
+    target_logs TEXT NOT NULL,
+    control_logs TEXT NOT NULL,
+    rule_sha256 TEXT NOT NULL CHECK (rule_sha256 ~ '^[0-9a-f]{64}$'),
+    target_sha256 TEXT NOT NULL CHECK (target_sha256 ~ '^[0-9a-f]{64}$'),
+    control_sha256 TEXT NOT NULL CHECK (control_sha256 ~ '^[0-9a-f]{64}$'),
+    evaluator_version TEXT NOT NULL,
+    result JSONB NOT NULL CHECK (result->>'verdict' IN ('pass','fail','inconclusive')),
+    notes TEXT NOT NULL DEFAULT '' CHECK (char_length(notes) <= 4000),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+    CHECK (octet_length(target_logs)+octet_length(control_logs) <= 1048576)
+);
+CREATE INDEX IF NOT EXISTS idx_finding_defense_replays_history
+    ON finding_defense_replays(finding_id, id DESC);
+
+CREATE TABLE IF NOT EXISTS security_sources (
+    id BIGSERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    revision BIGINT NOT NULL DEFAULT 1 CHECK (revision > 0),
+    config JSONB NOT NULL,
+    secret_cipher BYTEA NOT NULL DEFAULT ''::bytea,
+    enabled BOOLEAN NOT NULL DEFAULT true,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp()
+);
+
+-- Source/retest IDs deliberately have no FK: historical executions must survive
+-- source removal, conversation removal, and task archive compaction/restore.
+CREATE TABLE IF NOT EXISTS finding_defense_executions (
+    id BIGSERIAL PRIMARY KEY,
+    finding_id BIGINT NOT NULL REFERENCES findings(id) ON DELETE CASCADE,
+    source_id BIGINT NOT NULL,
+    source_revision BIGINT NOT NULL CHECK (source_revision > 0),
+    source_snapshot JSONB NOT NULL,
+    retest_id BIGINT NOT NULL UNIQUE,
+    retest_snapshot JSONB NOT NULL,
+    diagnosis_snapshot JSONB NOT NULL DEFAULT '{}',
+    correlation_id UUID NOT NULL UNIQUE,
+    plan_snapshot JSONB NOT NULL,
+    evidence_version BIGINT NOT NULL CHECK (evidence_version >= 0),
+    source_fingerprint TEXT NOT NULL CHECK (source_fingerprint ~ '^[0-9a-f]{32}$'),
+    baseline_id BIGINT,
+    remediation_note TEXT NOT NULL DEFAULT '' CHECK (char_length(remediation_note) <= 8000),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+    UNIQUE(id,finding_id),
+    CHECK (baseline_id IS NULL OR baseline_id <> id)
+);
+ALTER TABLE finding_defense_executions ADD COLUMN IF NOT EXISTS diagnosis_snapshot JSONB NOT NULL DEFAULT '{}';
+ALTER TABLE finding_defense_executions ADD COLUMN IF NOT EXISTS source_kind TEXT NOT NULL DEFAULT 'splunk' CHECK (source_kind IN ('splunk','file'));
+CREATE INDEX IF NOT EXISTS idx_finding_defense_executions_history ON finding_defense_executions(finding_id,id DESC);
+CREATE TABLE IF NOT EXISTS finding_defense_assessments (
+    id BIGSERIAL PRIMARY KEY,
+    finding_id BIGINT NOT NULL REFERENCES findings(id) ON DELETE CASCADE,
+    execution_id BIGINT NOT NULL,
+    detection TEXT NOT NULL CHECK(detection IN ('detected','missed','inconclusive')),
+    prevention TEXT NOT NULL CHECK(prevention IN ('blocked','not_blocked','inconclusive')),
+    reasons JSONB NOT NULL,
+    recommendations JSONB NOT NULL,
+    evidence JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+    FOREIGN KEY(execution_id,finding_id) REFERENCES finding_defense_executions(id,finding_id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_finding_defense_assessments_history ON finding_defense_assessments(execution_id,id DESC);
+ALTER TABLE finding_defense_assessments ADD COLUMN IF NOT EXISTS diagnostics JSONB NOT NULL DEFAULT '[]';
+
+-- Freeze the first terminal retest metadata; never copy its large agent prompt
+-- snapshot. This also covers stop-on-conversation-delete and restart recovery.
+CREATE OR REPLACE FUNCTION cache_defense_retest_state() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    UPDATE finding_defense_executions SET retest_snapshot=to_jsonb(NEW)-'snapshot'
+    WHERE retest_id=NEW.id AND COALESCE(retest_snapshot->>'status','') NOT IN ('completed','failed','stopped');
+    RETURN NEW;
+END;
+$$;
+DROP TRIGGER IF EXISTS trg_cache_defense_retest_state ON finding_retests;
+CREATE TRIGGER trg_cache_defense_retest_state AFTER UPDATE ON finding_retests
+    FOR EACH ROW EXECUTE FUNCTION cache_defense_retest_state();
+
+-- Append-only historical CERT investigations, independent of defense retests.
+CREATE TABLE IF NOT EXISTS finding_investigations (
+    id BIGSERIAL PRIMARY KEY,
+    finding_id BIGINT NOT NULL REFERENCES findings(id) ON DELETE CASCADE,
+    evidence_version BIGINT NOT NULL CHECK (evidence_version >= 0),
+    source_fingerprint TEXT NOT NULL CHECK (source_fingerprint ~ '^[0-9a-f]{32}$'),
+    payload JSONB NOT NULL CHECK (jsonb_typeof(payload)='object'),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp()
+);
+CREATE INDEX IF NOT EXISTS idx_finding_investigations_history ON finding_investigations(finding_id,id DESC);
+
+-- Agentic CERT runs retain query evidence separately from immutable uploads.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_finding_investigations_identity ON finding_investigations(id,finding_id);
+CREATE TABLE IF NOT EXISTS finding_investigation_runs (
+    id BIGSERIAL PRIMARY KEY,
+    finding_id BIGINT NOT NULL REFERENCES findings(id) ON DELETE CASCADE,
+    investigation_id BIGINT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'queued' CHECK (status IN ('queued','running','completed','insufficient_data','budget_exhausted','cancelled','model_error','interrupted')),
+    options JSONB NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(options)='object'),
+    events JSONB NOT NULL DEFAULT '[]'::jsonb CHECK (jsonb_typeof(events)='array'),
+    result JSONB NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(result)='object'),
+    rounds BIGINT NOT NULL DEFAULT 0 CHECK (rounds>=0),
+    model_calls BIGINT NOT NULL DEFAULT 0 CHECK (model_calls>=0),
+    queries BIGINT NOT NULL DEFAULT 0 CHECK (queries>=0),
+    tool_calls BIGINT NOT NULL DEFAULT 0 CHECK (tool_calls>=0),
+    input_tokens BIGINT NOT NULL DEFAULT 0 CHECK (input_tokens>=0),
+    output_tokens BIGINT NOT NULL DEFAULT 0 CHECK (output_tokens>=0),
+    error TEXT NOT NULL DEFAULT '',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+    started_at TIMESTAMPTZ,
+    finished_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+    FOREIGN KEY (investigation_id,finding_id) REFERENCES finding_investigations(id,finding_id) ON DELETE CASCADE,
+    CHECK ((status IN ('queued','running')) = (finished_at IS NULL))
+);
+CREATE INDEX IF NOT EXISTS idx_finding_investigation_runs_history ON finding_investigation_runs(finding_id,id DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_finding_investigation_runs_active ON finding_investigation_runs(finding_id) WHERE status IN ('queued','running');
+
+-- AegisLoop cases begin with log evidence, independently of offensive findings.
+-- Optional finding links have no FK: snapshots survive finding/task removal.
+CREATE TABLE IF NOT EXISTS defensive_cases (
+    id BIGSERIAL PRIMARY KEY,
+    finding_id BIGINT CHECK (finding_id > 0),
+    payload JSONB NOT NULL CHECK (jsonb_typeof(payload)='object'),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp()
+);
+CREATE INDEX IF NOT EXISTS idx_defensive_cases_history ON defensive_cases(id DESC);
+CREATE TABLE IF NOT EXISTS defensive_case_runs (
+    id BIGSERIAL PRIMARY KEY,
+    case_id BIGINT NOT NULL REFERENCES defensive_cases(id) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'queued' CHECK (status IN ('queued','running','completed','insufficient_data','budget_exhausted','cancelled','model_error','interrupted')),
+    options JSONB NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(options)='object'),
+    events JSONB NOT NULL DEFAULT '[]'::jsonb CHECK (jsonb_typeof(events)='array'),
+    result JSONB NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(result)='object'),
+    rounds BIGINT NOT NULL DEFAULT 0 CHECK (rounds>=0),
+    model_calls BIGINT NOT NULL DEFAULT 0 CHECK (model_calls>=0),
+    queries BIGINT NOT NULL DEFAULT 0 CHECK (queries>=0),
+    tool_calls BIGINT NOT NULL DEFAULT 0 CHECK (tool_calls>=0),
+    input_tokens BIGINT NOT NULL DEFAULT 0 CHECK (input_tokens>=0),
+    output_tokens BIGINT NOT NULL DEFAULT 0 CHECK (output_tokens>=0),
+    error TEXT NOT NULL DEFAULT '',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+    started_at TIMESTAMPTZ,
+    finished_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+    CHECK ((status IN ('queued','running')) = (finished_at IS NULL))
+);
+CREATE INDEX IF NOT EXISTS idx_defensive_case_runs_history ON defensive_case_runs(case_id,id DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_defensive_case_runs_active ON defensive_case_runs(case_id) WHERE status IN ('queued','running');
+
+-- Immutable offline rule comparisons keep source evidence after source removal.
+-- Optional finding/case references are validated and snapshotted by db.Save.
+CREATE TABLE IF NOT EXISTS closed_loop_iterations (
+    id BIGSERIAL PRIMARY KEY,
+    scenario TEXT NOT NULL CHECK (char_length(scenario) BETWEEN 1 AND 200),
+    finding_id BIGINT,
+    case_id BIGINT,
+    payload JSONB NOT NULL CHECK (jsonb_typeof(payload)='object'),
+    tuning_logs TEXT NOT NULL,
+    evaluation_logs TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp()
+);
+CREATE INDEX IF NOT EXISTS idx_closed_loop_iterations_history ON closed_loop_iterations(id DESC);
+
+-- Real ARTEX reruns and bounded SIEM observations are distinct from offline
+-- labeled replay. Snapshots survive source deletion; no write/deploy privilege.
+CREATE TABLE IF NOT EXISTS closed_loop_live_cycles (
+ id BIGSERIAL PRIMARY KEY,
+ request_id UUID NOT NULL UNIQUE,
+ finding_id BIGINT NOT NULL,
+ scenario TEXT NOT NULL CHECK(char_length(scenario) BETWEEN 1 AND 200),
+ baseline_execution_id BIGINT NOT NULL UNIQUE,
+ current_execution_id BIGINT UNIQUE,
+ status TEXT NOT NULL CHECK(status IN ('baseline_running','baseline_ready','candidate_ready','rerun_running','completed','inconclusive','stopped')),
+ revision BIGINT NOT NULL DEFAULT 1 CHECK(revision>0),
+ baseline_rule JSONB NOT NULL,
+ candidate_rule JSONB,
+ payload JSONB NOT NULL CHECK(jsonb_typeof(payload)='object'),
+ baseline_snapshot JSONB NOT NULL,
+ current_snapshot JSONB,
+ remediation_note TEXT NOT NULL DEFAULT '',
+ created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+ updated_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp()
+);
+CREATE INDEX IF NOT EXISTS idx_closed_loop_live_cycles_history ON closed_loop_live_cycles(id DESC);
+CREATE TABLE IF NOT EXISTS closed_loop_live_observations (
+ id BIGSERIAL PRIMARY KEY,
+ cycle_id BIGINT NOT NULL REFERENCES closed_loop_live_cycles(id) ON DELETE CASCADE,
+ phase TEXT NOT NULL CHECK(phase IN ('baseline','rerun')),
+ execution_id BIGINT NOT NULL,
+ assessment_id BIGINT NOT NULL,
+ rule_revision BIGINT NOT NULL,
+ evidence_sha256 TEXT NOT NULL CHECK(evidence_sha256 ~ '^[0-9a-f]{64}$'),
+ summary JSONB NOT NULL CHECK(jsonb_typeof(summary)='object'),
+ payload JSONB NOT NULL CHECK(jsonb_typeof(payload)='object'),
+ created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+ UNIQUE(cycle_id,phase,rule_revision,evidence_sha256)
+);
+CREATE INDEX IF NOT EXISTS idx_closed_loop_live_observations_history ON closed_loop_live_observations(cycle_id,id DESC);
+
+-- Bounded, resumable Offensive candidate review; runner scan IDs live outside PG.
+CREATE TABLE IF NOT EXISTS offensive_candidate_reviews (
+    run_id TEXT PRIMARY KEY,
+    document JSONB NOT NULL,
+    owner TEXT NOT NULL DEFAULT '',
+    lease_until TIMESTAMPTZ
+);

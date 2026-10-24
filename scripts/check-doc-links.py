@@ -39,6 +39,8 @@ MD_LINK = re.compile(r"(?<!\!)\[[^\]]*\]\(([^)\s]+)")
 MD_IMAGE = re.compile(r"!\[[^\]]*\]\(([^)\s]+)")
 # <img ... src="path" ...> HTML 이미지.
 HTML_IMAGE = re.compile(r"<img[^>]*\bsrc=[\"']([^\"']+)[\"']", re.IGNORECASE)
+# GitHub also supports explicit anchors used to keep translated section links stable.
+HTML_ANCHOR = re.compile(r"<a\s[^>]*\b(?:id|name)=[\"']([^\"']+)[\"']", re.IGNORECASE)
 
 # 네트워크·비파일 스킴. 앵커(`#`)는 같은 문서 참조이므로 여기 넣지 않는다.
 EXTERNAL_PREFIXES = ("http://", "https://", "mailto:", "tel:", "data:")
@@ -97,6 +99,7 @@ def heading_slugs(root: str, md: str) -> set:
                 continue
             if in_fence:
                 continue
+            slugs.update(HTML_ANCHOR.findall(line))
             match = ATX_HEADING.match(line.rstrip("\n"))
             if not match:
                 continue

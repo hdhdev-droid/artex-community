@@ -212,7 +212,7 @@ export default function CommandsPage() {
                 <TableRow>
                   <TableHead className="w-[130px]">{t("colTime")}</TableHead>
                   <TableHead className="w-[60px]">{t("colTask")}</TableHead>
-                  <TableHead className="w-[90px]">Worker</TableHead>
+                  <TableHead className="w-[90px]">{t("labels.worker")}</TableHead>
                   <TableHead className="w-[110px]">{t("colTool")}</TableHead>
                   <TableHead>{t("colInput")}</TableHead>
                   <TableHead className="w-[60px]">{t("colStatus")}</TableHead>

@@ -18,6 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
+import { useGeneratedMessage } from "@/lib/generated-message-i18n";
 import type { AssetInterceptKind, AssetInterceptRule } from "@/lib/types";
 
 // ---- kind 메타 정보 ----
@@ -91,6 +92,7 @@ function frontValidate(form: RuleForm): "contentRequired" | "cidrInvalid" | null
 // ---- page ----
 
 export default function AssetInterceptPage() {
+  const generated = useGeneratedMessage();
   const t = useTranslations("assetInterceptPage");
   const tr = useTranslations("assetInterceptRules");
   const [rules, setRules] = React.useState<AssetInterceptRule[]>([]);
@@ -238,7 +240,7 @@ export default function AssetInterceptPage() {
                             {t("builtin")}
                           </Badge>
                         )}
-                        <span className="truncate">{rule.note}</span>
+                        <span className="truncate">{rule.builtin ? generated(rule.note) : rule.note}</span>
                       </div>
                     </TableCell>
                     <TableCell className="text-center">

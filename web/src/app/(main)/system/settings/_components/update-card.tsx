@@ -202,7 +202,8 @@ export function UpdateCard() {
           <Badge variant="secondary" className="font-mono">
             {info?.current ?? "…"}
           </Badge>
-          {info && (
+          {info?.mode === "demo" && <Badge variant="outline">{t("update.modeDemo")}</Badge>}
+          {info && info.mode !== "demo" && (
             <>
               <Badge variant="outline" className="font-mono">
                 {info.os}/{info.arch}
@@ -231,6 +232,38 @@ export function UpdateCard() {
             </a>
           )}
         </div>
+
+        {info?.repo && (
+          <p className="text-xs text-muted-foreground">
+            {t("update.source")}: <span className="font-mono">{info.repo}</span>
+          </p>
+        )}
+        {info?.mode === "demo" && <p className="text-xs text-muted-foreground">{t("update.demoNote")}</p>}
+
+        {info?.release && (
+          <dl className="space-y-1 break-words text-xs text-muted-foreground">
+            <div>
+              <dt className="inline">{t("update.communityVersion")}: </dt>
+              <dd className="inline font-mono">v{info.release.version}</dd>
+            </div>
+            <div>
+              <dt className="inline">{t("update.upstreamBase")}: </dt>
+              <dd className="inline font-mono">
+                {info.release.upstream.repository} · {info.release.upstream.describe}
+              </dd>
+            </div>
+            <div>
+              <dt className="inline">{t("update.baseCommit")}: </dt>
+              <dd className="inline font-mono">{info.release.upstream.commit}</dd>
+            </div>
+            <div>
+              <dt className="inline">{t("update.originalBase")}: </dt>
+              <dd className="inline font-mono">
+                {info.release.upstream.original_repository} · {info.release.upstream.original_version}
+              </dd>
+            </div>
+          </dl>
+        )}
 
         {info?.boot_notice && (
           <p className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-xs text-amber-700 dark:text-amber-400">
@@ -283,7 +316,12 @@ export function UpdateCard() {
         )}
 
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => check(false)} disabled={checking || busy || restarting}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => check(false)}
+            disabled={checking || busy || restarting || info?.mode === "demo"}
+          >
             <RefreshCwIcon className={checking ? "size-4 animate-spin" : "size-4"} />
             {t("update.check")}
           </Button>
@@ -303,7 +341,7 @@ export function UpdateCard() {
           )}
         </div>
 
-        <p className="text-xs text-muted-foreground">{t.rich("update.footer", richTags)}</p>
+        {info?.mode !== "demo" && <p className="text-xs text-muted-foreground">{t.rich("update.footer", richTags)}</p>}
       </CardContent>
     </Card>
   );

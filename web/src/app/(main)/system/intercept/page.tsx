@@ -19,7 +19,9 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { getDateLocale } from "@/i18n/datetime";
 import { api } from "@/lib/api";
+import { useGeneratedMessage } from "@/lib/generated-message-i18n";
 import type {
   InterceptAction,
   InterceptRule,
@@ -266,7 +268,7 @@ function JudgeCard() {
               </Button>
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-              <JudgeStat label={t("judge.usageCalls")} value={usage.calls.toLocaleString()} />
+              <JudgeStat label={t("judge.usageCalls")} value={usage.calls.toLocaleString(getDateLocale())} />
               <JudgeStat label={t("judge.usageInput")} value={fmtTokens(usage.input_tokens)} />
               <JudgeStat label={t("judge.usageOutput")} value={fmtTokens(usage.output_tokens)} />
               <JudgeStat label={t("judge.usageCacheRead")} value={fmtTokens(usage.cache_read_tokens)} />
@@ -410,6 +412,7 @@ function JudgeCard() {
 // ---- page ----
 
 export default function InterceptPage() {
+  const generated = useGeneratedMessage();
   const t = useTranslations("interceptPage");
   const [rules, setRules] = React.useState<InterceptRule[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -716,7 +719,7 @@ export default function InterceptPage() {
                         <TableCell>
                           <span className="font-mono text-xs tabular-nums">{rule.priority}</span>
                         </TableCell>
-                        <TableCell className="font-medium text-sm">{rule.name}</TableCell>
+                        <TableCell className="font-medium text-sm">{generated(rule.name)}</TableCell>
                         <TableCell>
                           <span className="text-xs text-muted-foreground">
                             {rule.match_target === "tool_name" ? t("target.tool_name") : t("target.tool_input")}
@@ -783,6 +786,9 @@ export default function InterceptPage() {
                 value={form.name}
                 onChange={(e) => set({ name: e.target.value })}
               />
+              {generated(form.name) !== form.name && (
+                <p className="text-muted-foreground text-xs">{generated(form.name)}</p>
+              )}
             </Field>
 
             <Field label={t("editor.priority")}>
@@ -861,6 +867,9 @@ export default function InterceptPage() {
                   rows={2}
                   className="resize-none"
                 />
+                {generated(form.message) !== form.message && (
+                  <p className="text-muted-foreground text-xs">{generated(form.message)}</p>
+                )}
               </Field>
             )}
 

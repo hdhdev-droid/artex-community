@@ -1,0 +1,42 @@
+# Optional overlay for the locally built community application.
+# Nothing starts unless this file is explicitly included by the operator.
+# Uses the base compose application's existing data directory and database.
+# The base Dockerfile requires a previously built dist/<architecture>/artex
+# containing this community change; this overlay does not compile the app.
+services:
+  artex:
+    image: artex-community:local
+    build:
+      context: .
+    environment:
+      ARTEX_OFFENSIVE_URL: http://offensive-runner:8090
+      ARTEX_OFFENSIVE_TOKEN_FILE: /run/offensive/token
+    volumes:
+      - type: bind
+        source: ./.secrets/offensive-token
+        target: /run/offensive/token
+        read_only: true
+        bind:
+          create_host_path: false
+    depends_on:
+      offensive-runner:
+        condition: service_started
+
+  offensive-runner:
+    image: artex-community-offensive-runner:local
+    build:
+      context: .
+      dockerfile: Dockerfile.offensive-runner
+    environment:
+      ARTEX_OFFENSIVE_TOKEN_FILE: /run/offensive/token
+      OFFENSIVE_DATA_DIR: /data/offensive/runs
+      OFFENSIVE_TARGETS_DIR: /data/offensive/targets
+    volumes:
+      - ./data/offensive:/data/offensive
+      - type: bind
+        source: ./.secrets/offensive-token
+        target: /run/offensive/token
+        read_only: true
+        bind:
+          create_host_path: false
+    restart: unless-stopped

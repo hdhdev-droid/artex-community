@@ -1,4 +1,15 @@
 .git
+.secrets
+.env
+*.env
+jwt.key
+**/jwt.key
+config.json
+**/chatgpt-oauth
+auth
+work
+test-results
+.local-runtime
 **/node_modules
 web/.next
 web/out

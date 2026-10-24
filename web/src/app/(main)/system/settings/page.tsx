@@ -14,6 +14,7 @@ import {
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { OnboardingEntry } from "@/components/onboarding-entry";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,7 +22,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { LOCALE_LABELS, LOCALES, type Locale } from "@/i18n/config";
-import { setActiveLocale, useActiveLocale } from "@/i18n/locale-store";
+import { useActiveLocale } from "@/i18n/locale-store";
+import { saveServerLocale } from "@/i18n/server-locale";
 import { api } from "@/lib/api";
 import { type ChatSendMode, setChatSendMode, useChatSendMode, useChatSendModeOptions } from "@/lib/chat-send-mode";
 import type { Settings } from "@/lib/types";
@@ -63,7 +65,8 @@ export default function SystemSettingsPage() {
   // 纯前端偏好：不走 /api/settings，直接读写 localStorage。
   const sendMode = useChatSendMode();
   const sendModeOptions = useChatSendModeOptions();
-  // 표시 언어도 순수 프런트엔드 환경설정이라 /api/settings 를 거치지 않고 쿠키·localStorage 로만 둔다.
+  const [savingLocale, setSavingLocale] = React.useState(false);
+  // Browser storage caches the installation-wide server language.
   const activeLocale = useActiveLocale();
 
   const apply = React.useCallback((s: Settings) => {
@@ -118,16 +121,15 @@ export default function SystemSettingsPage() {
       .catch(() => undefined)
       .finally(() => setSaving(false));
   };
-  // 표시 언어 변경: UI 는 브라우저 로컬 설정이라 즉시 전환하고, 에이전트가 생성하는
-  // 리포트·요약·대화 응답의 언어(서버 설정 output_language)도 같은 값으로 맞춘다. 서버
-  // 저장이 실패해도 UI 전환은 그대로 유지하고 오류만 알린다.
+  // Keep the current UI language when the server rejects the change.
   const changeLanguage = (v: string) => {
+    if (savingLocale) return;
+    setSavingLocale(true);
     const loc = v as Locale;
-    setActiveLocale(loc);
-    api
-      .setSettings({ output_language: loc })
+    saveServerLocale(loc)
       .then(apply)
-      .catch((e) => toast.error(t("toast.saveFailed", { error: (e as Error).message })));
+      .catch((e) => toast.error(t("toast.saveFailed", { error: (e as Error).message })))
+      .finally(() => setSavingLocale(false));
   };
 
   React.useEffect(() => {
@@ -290,6 +292,9 @@ export default function SystemSettingsPage() {
       <div>
         <h1 className="text-xl font-semibold tracking-tight">{t("title")}</h1>
         <p className="text-muted-foreground text-sm">{t("subtitle")}</p>
+        <div className="mt-3">
+          <OnboardingEntry />
+        </div>
       </div>
 
       {/* 多列而非 grid：网络搜索卡片比其余高数倍，且高度随所选后端变化（brave/tavily
@@ -662,7 +667,7 @@ export default function SystemSettingsPage() {
             <Label htmlFor="ui-language" className="text-sm font-normal text-muted-foreground">
               {t("language.label")}
             </Label>
-            <Select value={activeLocale} onValueChange={changeLanguage}>
+            <Select value={activeLocale} onValueChange={changeLanguage} disabled={savingLocale}>
               <SelectTrigger id="ui-language" className="w-72">
                 <SelectValue />
               </SelectTrigger>

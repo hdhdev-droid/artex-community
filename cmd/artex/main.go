@@ -20,11 +20,12 @@ import (
 	"github.com/Autumn-27/artex/config"
 	"github.com/Autumn-27/artex/selfupdate"
 	"github.com/Autumn-27/artex/server"
+	buildinfo "github.com/Autumn-27/artex/version"
 )
 
 // version is the build version, injected at release time via
-// -ldflags "-X main.version=<tag>". Defaults to "dev" for local builds.
-var version = "dev"
+// -ldflags "-X main.version=<tag>". Empty means a local development build.
+var version string
 
 const banner = `
     _    ____ _____ _______  __
@@ -51,12 +52,20 @@ func main() {
 }
 
 func run() int {
+	if version == "" {
+		version = buildinfo.Version() + "-dev"
+	}
+	showVersion := flag.Bool("version", false, "print the build version and exit")
 	var (
 		addr    = flag.String("addr", "127.0.0.1:8787", "HTTP listen address (default accepts local connections only; use :8787 to serve other hosts)")
 		dataDir = flag.String("data", filepath.Join(config.BaseDir(), "data"), "data directory for SQLite stores (default: data/ next to the executable)")
 		proxy   = flag.String("proxy", "127.0.0.1:8788", "traffic recording proxy address (empty to disable)")
 	)
 	flag.Parse()
+	if *showVersion {
+		fmt.Println(version)
+		return 0
+	}
 
 	// hand the build version to the server package so GET /api/health can report it
 	// to the frontend top bar.

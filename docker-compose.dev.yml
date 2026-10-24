@@ -1,0 +1,131 @@
+name: artex-community-dev
+
+# Isolated local development stack. Never combine with the production compose.
+services:
+  web-check:
+    profiles: ["test"]
+    image: node:22-bookworm-slim
+    working_dir: /app
+    command:
+      - sh
+      - -c
+      - "tar -C /src --exclude=node_modules --exclude=.next --exclude='.env*' --exclude='*.tsbuildinfo' -cf /tmp/web-source.tar . && tar -xf /tmp/web-source.tar -C /app && npm run build"
+    environment:
+      NEXT_TELEMETRY_DISABLED: "1"
+    volumes:
+      - ./web:/src:ro
+      - ./version:/version:ro
+      - node_modules:/app/node_modules
+      - web_build:/app/.next
+
+  postgres-test:
+    profiles: ["test"]
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: artex
+      POSTGRES_DB: artex_test
+      ARTEX_DISPOSABLE_TEST_DB: "1"
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres-password
+    volumes:
+      - ./.secrets/dev/postgres-password:/run/secrets/postgres-password:ro
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U artex -d artex_test"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: artex
+      POSTGRES_DB: artex
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres-password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./.secrets/dev/postgres-password:/run/secrets/postgres-password:ro
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U artex -d artex"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    image: artex-community-backend:dev
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    working_dir: /src
+    command: ["sh", "/src/scripts/dev-backend.sh"]
+    environment:
+      ARTEX_CONFIG: /app/nonexistent-config.json
+      ARTEX_SKILL_DIR: /src/skills
+      ARTEX_LANG: en
+      ARTEX_CORS_ORIGINS: http://localhost:5173
+      ARTEX_CHATGPT_CALLBACK_LISTEN: 0.0.0.0:8789
+      ARTEX_OFFENSIVE_URL: http://offensive-runner:8090
+      ARTEX_OFFENSIVE_TOKEN_FILE: /run/secrets/offensive-token
+    volumes:
+      - .:/src:ro
+      - runtime:/app
+      - data:/app/data
+      - gomod:/go/pkg/mod
+      - gobuild:/root/.cache/go-build
+      - ./.secrets/dev:/run/secrets:ro
+    ports:
+      - "127.0.0.1:8787:8787"
+      - "127.0.0.1:8788:8788"
+      - "127.0.0.1:8789:8789"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    image: node:22-bookworm-slim
+    working_dir: /app
+    command: ["sh", "-c", "npm ci --no-audit --no-fund && npm run dev -- --webpack --hostname 0.0.0.0 --port 5173"]
+    environment:
+      AUTOPENTEST_API: http://backend:8787
+      NEXT_PUBLIC_MOCK: "0"
+      WATCHPACK_POLLING: "true"
+      NEXT_TELEMETRY_DISABLED: "1"
+      HUSKY: "0"
+    volumes:
+      - ./web:/app
+      - ./version:/version:ro
+      - node_modules:/app/node_modules
+      - next_cache:/app/.next
+      - npm_cache:/root/.npm
+    ports:
+      - "127.0.0.1:5173:5173"
+    depends_on:
+      - backend
+
+  offensive-runner:
+    # Keep scanner binaries on AMD64; Apple Silicon uses Docker emulation.
+    platform: linux/amd64
+    image: artex-community-offensive-runner:dev
+    build:
+      context: .
+      dockerfile: Dockerfile.offensive-runner
+    environment:
+      ARTEX_OFFENSIVE_TOKEN_FILE: /run/secrets/offensive-token
+      OFFENSIVE_DATA_DIR: /data/offensive/runs
+      OFFENSIVE_TARGETS_DIR: /data/offensive/targets
+    volumes:
+      - data:/data
+      - ./.secrets/dev/offensive-token:/run/secrets/offensive-token:ro
+
+volumes:
+  web_build:
+  pgdata:
+  runtime:
+  data:
+  gomod:
+  gobuild:
+  node_modules:
+  next_cache:
+  npm_cache:

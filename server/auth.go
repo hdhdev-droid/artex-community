@@ -78,29 +78,62 @@ const (
 // key is generated and persisted.
 func loadOrCreateJWTKey(keyDir, dataDir string) ([]byte, error) {
 	path := filepath.Join(keyDir, jwtKeyFilename)
+	if err := os.MkdirAll(keyDir, 0700); err != nil {
+		return nil, fmt.Errorf("create auth directory: %w", err)
+	}
 	// one-time migration out of the old in-workspace location.
 	if legacy := filepath.Join(dataDir, jwtKeyFilename); legacy != path {
 		if _, err := os.Stat(path); os.IsNotExist(err) {
 			if data, rerr := os.ReadFile(legacy); rerr == nil {
-				if werr := os.WriteFile(path, data, 0o600); werr == nil {
-					_ = os.Remove(legacy)
-					log.Printf(logT("[auth] JWT 키를 %s 에서 %s 로 이전(탐색 가능한 워크스페이스 밖으로 이동)"), legacy, path)
+				if len(strings.TrimSpace(string(data))) < 32 {
+					return nil, fmt.Errorf("invalid legacy JWT key; restore the existing key from backup")
 				}
+				if werr := writeNewJWTKey(path, data); werr != nil {
+					return nil, werr
+				}
+				if err := os.Remove(legacy); err != nil {
+					return nil, fmt.Errorf("remove exposed legacy JWT key: %w", err)
+				}
+				log.Printf(logT("[auth] JWT 키를 %s 에서 %s 로 이전(탐색 가능한 워크스페이스 밖으로 이동)"), legacy, path)
+			} else if !os.IsNotExist(rerr) {
+				return nil, fmt.Errorf("read legacy JWT key: %w", rerr)
 			}
 		}
 	}
-	if data, err := os.ReadFile(path); err == nil && len(strings.TrimSpace(string(data))) >= 32 {
+	if data, err := os.ReadFile(path); err == nil {
+		if len(strings.TrimSpace(string(data))) < 32 {
+			return nil, fmt.Errorf("invalid JWT key; restore the existing key from backup")
+		}
 		return []byte(strings.TrimSpace(string(data))), nil
+	} else if !os.IsNotExist(err) {
+		return nil, fmt.Errorf("read JWT key: %w", err)
+	}
+	// Rotating a missing key would make the saved OAuth vault unrecoverable.
+	if _, err := os.Stat(filepath.Join(keyDir, "chatgpt-oauth", "credentials.enc")); !os.IsNotExist(err) {
+		return nil, fmt.Errorf("JWT key missing while OAuth credentials exist or cannot be checked; restore both from backup")
 	}
 	key, err := randomToken(32)
 	if err != nil {
 		return nil, fmt.Errorf("generate jwt key: %w", err)
 	}
-	if err := os.WriteFile(path, []byte(key), 0600); err != nil {
+	if err := writeNewJWTKey(path, []byte(key)); err != nil {
 		return nil, fmt.Errorf("write jwt key: %w", err)
 	}
 	log.Printf(logT("[auth] 새 JWT 키를 %s 에 기록"), path)
 	return []byte(key), nil
+}
+
+// Never overwrite a key created by another startup or a concurrent restore.
+func writeNewJWTKey(path string, data []byte) error {
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	if _, err := f.Write(data); err != nil {
+		return err
+	}
+	return f.Sync()
 }
 
 // randomToken returns n characters drawn from keyChars with crypto/rand.

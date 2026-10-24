@@ -8,7 +8,7 @@
 #   ARTEX_TARGET_OS=linux             One target OS in single-target mode.
 #   ARTEX_TARGET_ARCH=amd64           One target arch in single-target mode.
 #   ARTEX_TARGETS=linux/amd64,...     Comma-separated targets for multi-target mode.
-#   ARTEX_BUILD_VERSION=v0.3.3        Version embedded in the binary and archive name.
+#   ARTEX_BUILD_VERSION=v1.0.0        Release version matching version/VERSION.
 #   ARTEX_OUTPUT=/path/to/artex       Explicit binary path in single-target mode.
 #   ARTEX_OUTPUT_DIR=dist             Directory for default binary paths.
 #   ARTEX_PACKAGE=1                   Create a zip archive for each target.
@@ -90,15 +90,7 @@ done
 command -v go >/dev/null 2>&1 || die "Go 를 찾을 수 없습니다(이 프로젝트는 Go 1.26 이상이 필요합니다)"
 
 ARTEX_GOSUMDB="${ARTEX_GOSUMDB:-sum.golang.org}"
-if [ -z "${ARTEX_BUILD_VERSION:-}" ]; then
-  if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    ARTEX_BUILD_VERSION="$(git describe --tags --always --dirty)"
-  else
-    ARTEX_BUILD_VERSION="dev"
-  fi
-fi
-# Release tags are commonly passed as v0.3.3; keep the binary version consistent.
-ARTEX_BUILD_VERSION="${ARTEX_BUILD_VERSION#v}"
+source scripts/build-version.sh
 ARTEX_OUTPUT_DIR="${ARTEX_OUTPUT_DIR:-dist}"
 ARTEX_PACKAGE_DIR="${ARTEX_PACKAGE_DIR:-$ARTEX_OUTPUT_DIR}"
 ARTEX_UPX_ARGS="${ARTEX_UPX_ARGS:---best --lzma}"
@@ -183,6 +175,9 @@ package_binary() {
   fi
   cp -R skills "$package_root/"
   cp config.example.json "$package_root/"
+  cp version/VERSION version/upstream.json "$package_root/"
+  mkdir -p "$package_root/docs"
+  cp docs/deployment-auth.md "$package_root/docs/"
   if [ -f README.md ]; then cp README.md "$package_root/"; fi
   (cd "$ARTEX_PACKAGE_DIR" && zip -q -r -9 "$(basename "$archive")" "$(basename "$package_root")")
   rm -rf "$package_root"

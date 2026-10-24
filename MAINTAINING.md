@@ -2,6 +2,74 @@
 
 한국어 · [English](MAINTAINING.en.md)
 
+<a id="community-upstream"></a>
+
+## artex-community의 직접 상류와 업데이트 기준
+
+이 저장소 `hdhdev-droid/artex-community`는 `jiwoochris/artex-global`에서 포크했습니다.
+직접 업데이트를 추적할 상류는 [artex-global](https://github.com/jiwoochris/artex-global)이며,
+원본 프로젝트 계보는 `Autumn-27/ARTEX → artex-global → artex-community`입니다.
+
+- 확인일: **2026-10-20**.
+- 최초 기록한 상류 비교 기준: **`fdfb7a17b7da5e2de716c0e98475ec77a41c64c6`**.
+- 기록 당시 두 로컬 프로젝트의 `HEAD`가 위 커밋으로 같음을 확인했습니다. 원격의 최신 상태를 조회했다는 의미는 아닙니다.
+- 커뮤니티 저장소(`origin`): `https://github.com/hdhdev-droid/artex-community`.
+- 직접 상류: `https://github.com/jiwoochris/artex-global`.
+
+**이 절이 커뮤니티판의 상류 추적 기준입니다.** 아래 기존 절은 글로벌판에서 이어받은
+원본 ARTEX 동기화·현지화 안내입니다. 아래의 `d003372`, `upstream` 리모트,
+글로벌판 CI·릴리스 저장소 예시를 커뮤니티판의 직접 상류 기준으로 사용하지 않습니다.
+
+### 개선 사항·신규 버전 반영 절차
+
+1. 작업 트리와 기존 리모트를 확인합니다. 직접 상류용 이름은 `global-upstream`으로 구분하고,
+   이미 존재하면 주소가 맞는지 확인합니다. 없을 때만 아래 명령으로 등록합니다.
+
+   ```bash
+   git remote add global-upstream https://github.com/jiwoochris/artex-global.git
+   ```
+
+2. 업데이트 작업 시 상류를 조회하고, 위에 기록한 기준 커밋 이후의 변경과 릴리스 안내를 확인합니다.
+
+   ```bash
+   git fetch global-upstream
+   git log --oneline fdfb7a17b7da5e2de716c0e98475ec77a41c64c6..global-upstream/main
+   git diff --stat fdfb7a17b7da5e2de716c0e98475ec77a41c64c6 global-upstream/main
+   ```
+
+3. 보안 수정·버그 수정·기능 개선·의존성·DB 스키마·설정 변경을 구분하여 별도 작업 브랜치에서 반영합니다.
+   디렉터리를 통째로 덮어쓰지 않고 커뮤니티 고유 기능, 인증 강화, 다국어 지원을 보존합니다.
+   DB 작업은 조회만 하며, 스키마 적용·초기화·리셋을 실행하지 않습니다.
+4. 빌드·테스트는 자동으로 실행하지 않고, 필요한 검증 항목을 사용자에게 안내하여 요청 시 진행합니다.
+   상류의 CI 결과와 커뮤니티판의 검증 결과를 구분합니다.
+5. 반영한 상류 커밋·버전, 제외하거나 보류한 변경, 실제 검증 여부를 당일
+   `docs/complete/YYYY-MM-DD-작업명.md`에 기록합니다. 연속된 상류 변경을 모두 반영한 경우에만
+   위 비교 기준과 명령 예시의 커밋을 함께 갱신합니다. 일부 커밋만 선별했다면 기준은 유지하고 적용 목록을 기록합니다.
+
+이 문서화는 자동 갱신이나 정기 모니터링을 설정하지 않습니다.
+
+### community 배포 버전 관리
+
+상류 코드 검토 대상은 `jiwoochris/artex-global`로 유지하며, **설치·자동 업데이트 대상은 `hdhdev-droid/artex-community`의 정식 릴리스만** 사용합니다.
+업데이트 원본은 `selfupdate/github.go`의 `Repo` 상수이고 사용자 설정으로 변경하지 않습니다.
+
+- 현재 community 기준 버전은 `version/VERSION`의 **`1.0.0`**입니다. 발행 태그는 반드시 이 파일과 같은 `vMAJOR.MINOR.PATCH`여야 합니다. 수정은 PATCH, 호환 기능 추가는 MINOR, 호환성이 깨지는 변경은 MAJOR를 올립니다. `v1.0.0`은 발행 준비된 기준이며 아직 태그를 발행하지 않았습니다.
+- `version/VERSION`과 `version/upstream.json`을 빌드·화면·서버가 공유합니다. 태그와 VERSION이 다르면 CI가 중단됩니다. `web/package.json`의 버전은 프런트엔드 패키지 메타데이터이며 앱 업데이트 판정에 사용하지 않습니다.
+- `.github/workflows/release.yml`은 community 저장소에서만 발행하며, `v*` 태그 중 세 자리 정식 버전 형식이 아닌 태그(예: `v1.0.0-rc.1`)는 거부합니다. 프런트엔드·5개 플랫폼 패키지·Docker 이미지 빌드 후 ZIP과 `SHA256SUMS`를 GitHub Release에 게시합니다.
+- 태그에서 `v`를 뺀 값이 실행 파일의 `main.version`에 들어갑니다. CI에서 Linux 실행 파일의 `-version` 출력과 태그 일치 여부를 확인합니다. `-version`은 DB·업데이트 부트스트랩·서버 시작 전에 종료합니다.
+- 이미지 주소는 `ghcr.io/hdhdev-droid/artex-community`입니다. Docker의 `ARTEX_TAG=vX.Y.Z`로 배포 버전을 고정할 수 있으며 기본값은 `latest`입니다. 최초 community 릴리스/이미지가 실제 발행되기 전에는 내려받을 수 없습니다.
+- `build.sh`와 `build-cloud.sh`는 공통 `scripts/build-version.sh`를 사용합니다. 기본 개발 버전은 `1.0.0-dev`이며, CI가 명시하는 정식 `ARTEX_BUILD_VERSION`은 VERSION 파일과 일치해야 합니다. 개발 산출물에 정식 버전을 임의 지정하지 않습니다. 직접 `go build`한 바이너리도 VERSION에 `-dev`를 붙입니다.
+- 기존 설치에 새 업데이트 저장소 설정을 반영하려면 먼저 이번 community 코드를 빌드해 수동 배포해야 합니다. 이전 실행 파일은 여전히 이전 업데이트 주소를 갖고 있습니다.
+
+발행 전에는 기존 community 릴리스와 태그를 확인해 더 높은 버전을 정하고, 검증한 커밋의 완료 기록·변경 사항·DB 호환성을 확인합니다. 새 태그를 `origin`에 push하면 발행 워크플로가 실행되므로 승인된 배포 시에만 수행합니다. 이미 발행한 태그/파일을 덮어쓰지 않고 수정 버전을 새로 발행합니다. 상류 태그를 community 릴리스로 일괄 push하지 않습니다.
+
+앱은 community의 최신 정식 릴리스와 현재 실행 파일의 숫자 버전을 비교합니다. 더 높은 버전과 해당 OS/CPU 패키지·체크섬이 있어야 설치할 수 있습니다. 프로그램 교체는 DB 롤백을 제공하지 않으며 Docker 컨테이너 내부 업데이트도 이미지 자체를 변경하지 않습니다.
+샘플 화면은 `1.0.0-demo`와 community 기준 버전·상류 출처를 표시하며 외부 릴리스 조회·설치·롤백은 실행하지 않습니다. 정확한 포크 기준은 `version/upstream.json`의 `v0.3.15-global.1-9-gfdfb7a1`입니다. 원본 ARTEX `0.3.15` 기반 표시는 글로벌판 변경 기록에 근거합니다.
+
+다음 버전은 VERSION 갱신 → 해당 `docs/releases/vX.Y.Z.md` 작성 → 변경 커밋 → 동일 태그 발행 순서로 관리합니다. 현재 작업 트리에는 미커밋 기능이 있으므로 기존 HEAD에 바로 태그를 붙이면 해당 기능이 릴리스에 포함되지 않습니다.
+
+---
+
 이 문서는 **메인테이너**가 원본 저장소 [Autumn-27/ARTEX](https://github.com/Autumn-27/ARTEX)(현재 접속 불가, 2026-10 확인)의
 변경을 따라잡으면서 다국어 현지화를 유지하는 절차를 정리한 것입니다. 기여 범위·법적 책임·
 현지화 방침은 [CONTRIBUTING.md](CONTRIBUTING.md)에, 사용자용 안내는 [README.ko.md](README.ko.md)에
@@ -324,87 +392,47 @@ DOWN(404·410·5xx·연결 오류, 깨졌을 가능성 높음).
 
 ---
 
-## 9. 릴리스 발행 파이프라인
+## 9. Community 릴리스 발행 파이프라인
 
-버전 태그(`v*`)를 밀면 [`.github/workflows/release.yml`](.github/workflows/release.yml) 이 다섯
-플랫폼용 바이너리와, 조건을 만족할 때 멀티아키텍처 Docker 이미지를 만듭니다. 이 포크는 아직
-릴리스 태그를 끊은 적이 없어 이 워크플로가 한 번도 실행되지 않았으므로, 이 절은 파이프라인이
-무엇을 전제하고 무엇을 산출하는지, 그리고 그 전제가 지금 저장소 구조와 맞는지를 정리합니다.
-태그를 밀면 공개 저장소에 GitHub Release 가 생기므로, 릴리스를 끊는 일은 발행 결정이 선 뒤에
-합니다.
+버전 원본은 `version/VERSION`이며 현재 정식 릴리스 대상은 **1.0.0**입니다.
+상류 기준은 `version/upstream.json`, 릴리스 본문은 `docs/releases/v1.0.0.md`입니다.
+로컬 검증과 실제 GitHub 발행 상태는 [완료 기록](docs/complete/2026-10-24-release-readiness.md)에 구분합니다.
 
-### 9.1 릴리스를 끊는 법
+### 발행 전 검증
 
-`v` 로 시작하는 태그를 밀면 워크플로가 발화합니다.
+1. 작업 변경을 검토하고 커밋합니다. 인증 파일·`.env`·`.secrets`·`auth`·`work`·빌드 산출물은 커밋하지 않습니다.
+2. GitHub Actions의 **release → Run workflow**로 해당 브랜치를 검증합니다.
+   수동 실행은 테스트와 5개 플랫폼 ZIP을 만들며 GitHub Release나 GHCR 이미지는 공개하지 않습니다.
+3. 실제 OAuth 로그인·모델 선택·연결 테스트를 수행하고 운영 인증 백업과 이전 절차를 확인합니다.
+4. 발행할 커밋에 `v1.0.0` 태그를 붙이고 push하면 자동 발행합니다.
+   기존 태그를 덮어쓰지 않습니다. 다음 릴리스에서는 버전 파일·변경 기록을 함께 올립니다.
 
-```bash
-git tag v0.3.15
-git push origin v0.3.15
-```
+### 자동화의 검증과 산출물
 
-### 9.2 파이프라인이 하는 일
+- **validate:** community 저장소, 정식 버전 형식, 태그와 VERSION 일치, 릴리스 문서·상류 JSON 확인.
+- **backend:** 외부 서비스 없이 OAuth·업데이트 복구·도메인 테스트, ChatGPT 경쟁 상태 검사,
+  패키지별 별도 PostgreSQL 테스트, 인증 이전 도구 검사. 인증 관련 상세 로그는 공개하지 않음.
+- **frontend:** 단위 테스트, 5개 언어 키 정합성, 정적 내보내기.
+- **binaries:** 위 검증이 모두 성공한 뒤 Linux amd64/arm64, macOS amd64/arm64,
+  Windows amd64를 빌드하고 시작 스크립트·skills·VERSION·upstream.json·인증 운영 안내를 ZIP에 포함.
+  Linux amd64에서는 실행·버전 확인을 수행. 교차 컴파일만으로 다른 OS 실행까지 증명하지는 않음.
+- **docker:** 정식 태그에서만 Linux amd64/arm64 이미지를
+  `ghcr.io/hdhdev-droid/artex-community:<태그>`와 `latest`로 발행.
+- **release:** 바이너리·이미지 작업 성공 뒤 ZIP, SHA256SUMS, VERSION, upstream.json을 GitHub Release에 첨부.
 
-워크플로는 잡 다섯 개로 나뉩니다.
+GHCR 최초 발행 후 공개 설치 대상이면 패키지의 공개 읽기 권한을 확인합니다.
+운영에서는 `latest` 대신 검증한 태그를 고정하고,
+[인증 보존·이전·롤백 절차](docs/deployment-auth.md)에 따라 앱만 교체합니다.
+실행 파일 교체는 데이터베이스 롤백을 제공하지 않습니다.
 
-- **frontend.** 프런트엔드를 정적으로 한 번 내보내고(`web/out`) 그 산출물을 `web-dist`
-  아티팩트로 올립니다. 아래 binaries 잡이 대상마다 이 산출물을 다시 받아 재사용합니다.
-- **binaries.** 다섯 대상(linux amd64·arm64, darwin amd64·arm64, windows amd64)을 교차
-  컴파일하고 대상마다 zip 으로 묶습니다. linux amd64 바이너리에는 `artex -h` 스모크 테스트를
-  돌려 바이너리가 실제로 실행되는지 확인합니다.
-- **release.** 모든 zip 을 모아 `SHA256SUMS` 체크섬을 만들고, GitHub Release 를 생성해 zip 과
-  체크섬을 첨부합니다.
-- **docker.** binaries 가 교차 컴파일한 linux 바이너리를 받아 멀티아키텍처(amd64·arm64) 이미지를
-  빌드하고 GitHub Container Registry 의 `ghcr.io/jiwoochris/artex-global` 에 릴리스 태그와 `latest`
-  로 올립니다. 로그인은 워크플로 기본 `GITHUB_TOKEN`(잡 권한 `packages: write`)으로 하므로 따로
-  둘 시크릿이 없습니다.
+### 로컬 패키징
 
-### 9.3 빌드 전제가 저장소 구조와 맞는가
-
-파이프라인은 다음 세 가지 전제 위에서 동작하며, 이 전제가 지금 저장소 구조와 모두 맞는지를
-로컬에서 binaries 잡을 직접 재현해 확인했습니다.
-
-- **프런트엔드 임베드.** frontend 잡이 올린 `web-dist`(= `web/out` 의 내용)를 binaries 잡이
-  `server/webui/dist` 로 받고, `server/webui_embed.go` 의 `//go:embed all:webui/dist` 가 그 자리를
-  바이너리에 임베드합니다. 그래서 binaries 잡은 프런트엔드를 다시 빌드하지 않고
-  `ARTEX_SKIP_FRONTEND=1` 로 [`build.sh`](build.sh) 를 호출합니다.
-- **바이너리·패키지 경로.** `build.sh --target <os>/<arch>` 는 `dist/artex-<os>-<arch>/artex`
-  바이너리와 `dist/` 아래 zip 패키지를 만듭니다. zip 에는 바이너리와 함께 시작 스크립트(리눅스·
-  macOS 는 `start.sh`, 윈도우는 `start.bat`), `skills/`, `config.example.json`, `README.md` 가
-  들어갑니다.
-- **Docker 이미지의 바이너리 복사.** binaries 잡은 linux 바이너리를 `bin-linux-<arch>`
-  아티팩트로 따로 올리고, docker 잡이 이것을 `dist/<arch>/artex` 로 받습니다.
-  [`Dockerfile`](Dockerfile) 의 `COPY dist/${TARGETARCH}/artex` 가, 멀티아키텍처 빌드에서 buildx
-  가 각 플랫폼에 맞춰 채워 주는 `TARGETARCH` 로 그 경로를 집습니다.
-  [`.dockerignore`](.dockerignore) 는 `dist/` 를 제외하지 않으므로 바이너리가 빌드 컨텍스트에
-  포함됩니다.
-
-### 9.4 Docker 이미지 네임스페이스
-
-이미지는 이 포크가 소유한 `ghcr.io/jiwoochris/artex-global` 로 발행하고, `docker-compose.yml` 도 이
-이미지를 받습니다(2026-10-11 결정, `work/DECISIONS-FOR-JIWOO.md` 8번 항목). 상류의
-`autumn27/artex` 는 Docker Hub 에서 내려갔고 이 포크에는 push 권한도 없어 쓰지 않습니다.
-GHCR 패키지는 처음 발행될 때 비공개로 만들어질 수 있으니, 첫 릴리스 뒤 패키지 설정에서 공개
-(public)인지 확인합니다. 비공개면 `docker compose pull` 이 인증 오류로 실패합니다.
-
-### 9.5 태그 없이 로컬에서 미리 검증하기
-
-공개 릴리스를 끊지 않고 파이프라인 전제만 확인하려면, binaries 잡을 로컬에서 재현합니다.
-로컬에 Go 가 없으면 Docker 로 동일하게 돌릴 수 있습니다.
+Go 1.26.3, Node 22, npm, rsync, zip이 있는 환경에서:
 
 ```bash
-# 1) 프런트엔드 정적 내보내기(release.yml 의 frontend 잡에 해당)
-cd web && npm ci && npm run build:static && cd ..
-# 2) binaries 잡이 아티팩트를 받는 자리에 배치
-rm -rf server/webui/dist && mkdir -p server/webui/dist && cp -a web/out/. server/webui/dist/
-# 3) 한 대상만 binaries 잡과 같은 환경으로 빌드
-docker run --rm -v "$PWD":/app -w /app \
-  -e ARTEX_SKIP_FRONTEND=1 -e ARTEX_SKIP_NPM_CI=1 \
-  -e ARTEX_COMPRESS=0 -e ARTEX_PACKAGE=1 -e ARTEX_PACKAGE_DIR=dist \
-  -e ARTEX_BUILD_VERSION=v0.0.0-local \
-  golang:1.26 bash -c 'apt-get update && apt-get install -y zip && ./build.sh --target linux/amd64'
-# 4) 산출물 확인: dist/artex-linux-amd64/artex · dist/*.zip · dist/SHA256SUMS
+ARTEX_BUILD_VERSION=v1.0.0 ARTEX_COMPRESS=0 ./build.sh --release
 ```
 
-`dist/artex-linux-amd64/artex` 는 정적 링크된 ELF 이고, `-h` 를 주면 사용법을 출력한 뒤 종료
-코드 0 으로 끝납니다. 이것이 binaries 잡의 스모크 테스트가 확인하는 동작입니다. 빌드 산출물
-(`dist/`·`server/webui/dist/`)은 저장소에 커밋하지 않습니다(`.gitignore` 로 제외됩니다).
+이미 정적 내보내기를 `server/webui/dist`에 준비했다면 `ARTEX_SKIP_FRONTEND=1`을 지정해 재사용합니다.
+기본 개발 빌드는 `1.0.0-dev`로 표시하여 정식 릴리스와 구분합니다.
+ZIP과 체크섬은 `dist`에 생성되며, 운영 데이터나 인증 파일은 패키징하지 않습니다.

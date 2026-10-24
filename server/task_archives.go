@@ -15,6 +15,7 @@ import (
 
 	"github.com/Autumn-27/artex/agent"
 	pgdb "github.com/Autumn-27/artex/db"
+	"github.com/Autumn-27/artex/internal/l10n"
 	"github.com/Autumn-27/artex/traffic"
 )
 
@@ -220,13 +221,13 @@ func (s *Server) archiveTask(job *pgdb.TaskArchive) (runErr error) {
 	removePackage = false
 	if trafficStage != nil {
 		if err := trafficStage.Commit(); err != nil {
-			warning := "보관을 완료했지만 전용 트래픽 핫 스토리지 정리에 실패했습니다(보관 패키지는 복원할 수 있습니다): " + err.Error()
+			warning := l10n.T("보관을 완료했지만 전용 트래픽 핫 스토리지 정리에 실패했습니다(보관 패키지는 복원할 수 있습니다): ") + err.Error()
 			log.Printf("[task-archive] task %s: %s", taskID, warning)
 			_ = s.m.pg.AppendTaskArchiveWarning(job.ID, warning)
 		}
 	}
 	if err := fileStage.commit(); err != nil {
-		warning := "보관을 완료했지만 임시 디렉터리 정리에 실패했습니다: " + err.Error()
+		warning := l10n.T("보관을 완료했지만 임시 디렉터리 정리에 실패했습니다: ") + err.Error()
 		log.Printf("[task-archive] task %s: %s", taskID, warning)
 		_ = s.m.pg.AppendTaskArchiveWarning(job.ID, warning)
 	}
@@ -346,7 +347,7 @@ func (s *Server) restoreTaskArchivePayload(job *pgdb.TaskArchive, snapshot *pgdb
 	}
 	if len(warnings) > 0 {
 		if _, err := s.m.pg.Exploration(snapshot.ExplorationID).AppendActivity(pgdb.Activity{
-			Worker: "system", Kind: "system", Summary: "작업 복원을 완료했지만 일부 연관 항목이 온전히 복원되지 못했습니다", Detail: strings.Join(warnings, "\n"),
+			Worker: "system", Kind: "system", Summary: l10n.T("작업 복원을 완료했지만 일부 연관 항목이 온전히 복원되지 못했습니다"), Detail: strings.Join(warnings, "\n"),
 		}); err != nil {
 			log.Printf("[task-archive] persist restore warnings for task %d: %v", job.TaskID, err)
 		}
@@ -601,7 +602,7 @@ func normalizeArchiveIDs(ids []int64) ([]int64, error) {
 	out := make([]int64, 0, len(ids))
 	for _, id := range ids {
 		if id <= 0 {
-			return nil, fmt.Errorf("보관 id %d 가 유효하지 않습니다", id)
+			return nil, fmt.Errorf(l10n.T("보관 id %d 가 유효하지 않습니다"), id)
 		}
 		if !seen[id] {
 			seen[id] = true

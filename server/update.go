@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/Autumn-27/artex/selfupdate"
+	buildinfo "github.com/Autumn-27/artex/version"
 )
 
 // 页面一键更新的 HTTP 面。真正的下载/校验/换装逻辑全在 selfupdate 包里，
@@ -234,6 +235,7 @@ func (s *Server) updateCheck(w http.ResponseWriter, r *http.Request) {
 		"arch":        runtime.GOARCH,
 		"has_backup":  selfupdate.HasBackup(),
 		"repo":        selfupdate.Repo,
+		"release":     buildinfo.Metadata(),
 		"boot_notice": boot.Detail,
 		"rolled_back": boot.RolledBack,
 	}

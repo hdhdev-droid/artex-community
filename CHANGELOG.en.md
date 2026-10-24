@@ -6,7 +6,13 @@ This document records the changes that the ARTEX global edition (this fork) adds
 
 The upstream ARTEX project's per-version release history (0.3.x and earlier) and contributor list are preserved verbatim in Chinese in [`CHANGELOG.zh.md`](CHANGELOG.zh.md). As with `README.zh.md`, the original text is kept unchanged so that it stays easy to compare against upstream changes. The detailed content and rationale for each change can be found in the repository's commit history.
 
-## [Unreleased]
+## [1.0.0] · Community release preparation
+
+The community version is now `1.0.0`, based on artex-global commit `fdfb7a17b7da5e2de716c0e98475ec77a41c64c6` (nine commits after `v0.3.15-global.1`). The global changelog records original ARTEX `0.3.15` as its basis.
+
+Version/provenance display and the community GitHub Actions release pipeline are configured. See [v1.0.0 release notes](docs/releases/v1.0.0.md) for scope and installation limitations. Tag publication is a separate step.
+
+## [Unreleased] · Inherited upstream history
 
 ### Localization (i18n)
 

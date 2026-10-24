@@ -1,0 +1,1115 @@
+[
+  [
+    "침투 테스트 보고서",
+    "Penetration test report",
+    "渗透测试报告",
+    "Informe de prueba de penetración",
+    "侵入テストレポート"
+  ],
+  [
+    "취약점 요약 보고서",
+    "Findings summary report",
+    "漏洞汇总报告",
+    "Informe resumido de hallazgos",
+    "脆弱性概要レポート"
+  ],
+  [
+    "이름 없는 작업",
+    "Untitled task",
+    "未命名任务",
+    "Tarea sin título",
+    "無題のタスク"
+  ],
+  [
+    "(지정되지 않음)",
+    "(not specified)",
+    "（未指定）",
+    "(sin especificar)",
+    "（未指定）"
+  ],
+  [
+    "작업 목표",
+    "Task goal",
+    "任务目标",
+    "Objetivo de la tarea",
+    "タスクの目標"
+  ],
+  [
+    "생성 시각",
+    "Generated at",
+    "生成时间",
+    "Fecha de generación",
+    "生成日時"
+  ],
+  [
+    "발견 시각",
+    "Discovered at",
+    "发现时间",
+    "Fecha de detección",
+    "検出日時"
+  ],
+  [
+    "확인된 취약점: **%d**건",
+    "Confirmed findings: **%d**",
+    "已确认漏洞：**%d**",
+    "Hallazgos confirmados: **%d**",
+    "確認済み脆弱性：**%d**件"
+  ],
+  [
+    "취약점 총계**: %d건",
+    "Total findings**: %d",
+    "漏洞总数**：%d",
+    "Total de hallazgos**: %d",
+    "脆弱性の総数**：%d件"
+  ],
+  [
+    "취약점 총계",
+    "Total findings",
+    "漏洞总数",
+    "Total de hallazgos",
+    "脆弱性の総数"
+  ],
+  [
+    "이번에 확인된 취약점이 없습니다.",
+    "No findings were confirmed in this run.",
+    "本次未确认漏洞。",
+    "No se confirmaron hallazgos en esta ejecución.",
+    "今回確認された脆弱性はありません。"
+  ],
+  [
+    "일치하는 취약점이 없습니다.",
+    "No matching findings.",
+    "没有匹配的漏洞。",
+    "No hay hallazgos coincidentes.",
+    "一致する脆弱性はありません。"
+  ],
+  [
+    "취약점 상세",
+    "Finding details",
+    "漏洞详情",
+    "Detalles de hallazgos",
+    "脆弱性の詳細"
+  ],
+  [
+    "상세 보고서",
+    "Detailed report",
+    "详细报告",
+    "Informe detallado",
+    "詳細レポート"
+  ],
+  [
+    "소속 작업",
+    "Task",
+    "所属任务",
+    "Tarea",
+    "所属タスク"
+  ],
+  [
+    "관련 트래픽 증거",
+    "Related traffic evidence",
+    "相关流量证据",
+    "Evidencia de tráfico relacionada",
+    "関連する通信証拠"
+  ],
+  [
+    "트래픽 증거 개수",
+    "Traffic evidence count",
+    "流量证据数量",
+    "Número de evidencias de tráfico",
+    "通信証拠数"
+  ],
+  [
+    "트래픽 증거 ID",
+    "Traffic evidence IDs",
+    "流量证据 ID",
+    "ID de evidencias de tráfico",
+    "通信証拠 ID"
+  ],
+  [
+    "증거 버전: %d, 바인딩 개수: %d.",
+    "Evidence version: %d, bindings: %d.",
+    "证据版本：%d，关联数量：%d。",
+    "Versión de evidencia: %d, vínculos: %d.",
+    "証拠バージョン：%d、関連付け数：%d。"
+  ],
+  [
+    "증거가 변경되어 상세 보고서를 갱신해야 합니다.",
+    "Evidence changed; regenerate the detailed report.",
+    "证据已更改，请重新生成详细报告。",
+    "La evidencia cambió; regenere el informe detallado.",
+    "証拠が変更されました。詳細レポートを更新してください。"
+  ],
+  [
+    "요청 메시지",
+    "Request message",
+    "请求报文",
+    "Mensaje de solicitud",
+    "リクエストメッセージ"
+  ],
+  [
+    "응답 메시지",
+    "Response message",
+    "响应报文",
+    "Mensaje de respuesta",
+    "レスポンスメッセージ"
+  ],
+  [
+    "상태 코드",
+    "status code",
+    "状态码",
+    "código de estado",
+    "ステータスコード"
+  ],
+  [
+    "미분류",
+    "Unclassified",
+    "未分类",
+    "Sin clasificar",
+    "未分類"
+  ],
+  [
+    "심각도",
+    "Severity",
+    "严重性",
+    "Gravedad",
+    "重大度"
+  ],
+  [
+    "심각",
+    "Critical",
+    "严重",
+    "Crítica",
+    "重大"
+  ],
+  [
+    "높음",
+    "High",
+    "高",
+    "Alta",
+    "高"
+  ],
+  [
+    "중간",
+    "Medium",
+    "中",
+    "Media",
+    "中"
+  ],
+  [
+    "낮음",
+    "Low",
+    "低",
+    "Baja",
+    "低"
+  ],
+  [
+    "취약점 요약 · 총 %d건",
+    "Findings summary · %d total",
+    "漏洞摘要 · 共 %d 项",
+    "Resumen de hallazgos · %d en total",
+    "脆弱性の概要 · 合計 %d 件"
+  ],
+  [
+    "취약점 알림",
+    "Finding notification",
+    "漏洞通知",
+    "Notificación de hallazgo",
+    "脆弱性の通知"
+  ],
+  [
+    "최근 %d분간 신규 취약점 %d건",
+    "Last %d minutes: %d new findings",
+    "最近 %d 分钟：%d 个新漏洞",
+    "Últimos %d minutos: %d hallazgos nuevos",
+    "過去 %d 分間：新規脆弱性 %d 件"
+  ],
+  [
+    "신규 취약점 %d건",
+    "%d new findings",
+    "%d 个新漏洞",
+    "%d hallazgos nuevos",
+    "新規脆弱性 %d 件"
+  ],
+  [
+    "(이 메시지에는 앞 %d건만 표시하며, 나머지 %d건은 다음 메시지에서 이어서 보냅니다)",
+    "(First %d shown; the remaining %d will follow in the next message)",
+    "（本条显示前 %d 项，其余 %d 项将在下一条发送）",
+    "(Se muestran %d; los %d restantes se enviarán en el siguiente mensaje)",
+    "（最初の %d 件を表示。残り %d 件は次のメッセージで送信します）"
+  ],
+  [
+    " (앞 %d건만 표시, 나머지 %d건은 다음 메시지에서 이어집니다)",
+    " (First %d shown; remaining %d follow in the next message)",
+    "（显示前 %d 项，其余 %d 项将在下一条发送）",
+    " (Se muestran %d; quedan %d para el siguiente mensaje)",
+    "（最初の %d 件を表示。残り %d 件は次のメッセージ）"
+  ],
+  [
+    "최근 %d분간 · %s",
+    "Last %d minutes · %s",
+    "最近 %d 分钟 · %s",
+    "Últimos %d minutos · %s",
+    "過去 %d 分間 · %s"
+  ],
+  [
+    "플랫폼에서 전체 보기",
+    "View all in the platform",
+    "在平台查看全部",
+    "Ver todo en la plataforma",
+    "プラットフォームですべて表示"
+  ],
+  [
+    "상태 변경",
+    "Status change",
+    "状态变更",
+    "Cambio de estado",
+    "ステータス変更"
+  ],
+  [
+    "상세 보기",
+    "View details",
+    "查看详情",
+    "Ver detalles",
+    "詳細を表示"
+  ],
+  [
+    "이름 없는 취약점",
+    "Untitled finding",
+    "未命名漏洞",
+    "Hallazgo sin título",
+    "無題の脆弱性"
+  ],
+  [
+    "취약점",
+    "Findings",
+    "漏洞",
+    "Hallazgos",
+    "脆弱性"
+  ],
+  [
+    "증거",
+    "Evidence",
+    "证据",
+    "Evidencia",
+    "証拠"
+  ],
+  [
+    "요약",
+    "Summary",
+    "摘要",
+    "Resumen",
+    "概要"
+  ],
+  [
+    "개요",
+    "Overview",
+    "概述",
+    "Descripción general",
+    "概要"
+  ],
+  [
+    "개수",
+    "Count",
+    "数量",
+    "Cantidad",
+    "件数"
+  ],
+  [
+    "이름",
+    "Name",
+    "名称",
+    "Nombre",
+    "名前"
+  ],
+  [
+    "유형",
+    "Type",
+    "类型",
+    "Tipo",
+    "種類"
+  ],
+  [
+    "상태",
+    "Status",
+    "状态",
+    "Estado",
+    "ステータス"
+  ],
+  [
+    "자산",
+    "Assets",
+    "资产",
+    "Activos",
+    "資産"
+  ],
+  [
+    "대상",
+    "Target",
+    "目标",
+    "Objetivo",
+    "対象"
+  ],
+  [
+    "대조",
+    "Control",
+    "对照",
+    "Control",
+    "対照"
+  ],
+  [
+    "요청 본문은 %d KiB 이하여야 합니다",
+    "Request body must not exceed %d KiB",
+    "请求正文不得超过 %d KiB",
+    "El cuerpo no debe superar %d KiB",
+    "リクエスト本文は %d KiB 以下にしてください"
+  ],
+  [
+    "대상·대조 로그 합계는 1 MiB 이하여야 합니다",
+    "Target and control logs must total at most 1 MiB",
+    "目标和对照日志合计不得超过 1 MiB",
+    "Los registros de objetivo y control no deben superar 1 MiB",
+    "対象・対照ログの合計は 1 MiB 以下にしてください"
+  ],
+  [
+    "규칙은 64 KiB 이하여야 합니다",
+    "Rule must not exceed 64 KiB",
+    "规则不得超过 64 KiB",
+    "La regla no debe superar 64 KiB",
+    "規則は 64 KiB 以下にしてください"
+  ],
+  [
+    "규칙 JSON: %s",
+    "Rule JSON: %s",
+    "规则 JSON：%s",
+    "JSON de regla: %s",
+    "規則 JSON：%s"
+  ],
+  [
+    "규칙에는 version: 1과 all 필드만 있어야 합니다",
+    "Rule must contain only version: 1 and all",
+    "规则只能包含 version: 1 和 all",
+    "La regla solo debe contener version: 1 y all",
+    "規則には version: 1 と all のみを指定してください"
+  ],
+  [
+    "all에는 1~16개의 조건이 필요합니다",
+    "all requires 1–16 conditions",
+    "all 需要 1–16 个条件",
+    "all requiere de 1 a 16 condiciones",
+    "all には 1～16 個の条件が必要です"
+  ],
+  [
+    "조건 %d에는 field, op, value만 있어야 합니다",
+    "Condition %d must contain only field, op and value",
+    "条件 %d 只能包含 field、op 和 value",
+    "La condición %d solo admite field, op y value",
+    "条件 %d には field、op、value のみを指定してください"
+  ],
+  [
+    "조건 %d의 필드 이름 또는 연산자가 올바르지 않습니다",
+    "Condition %d has an invalid field name or operator",
+    "条件 %d 的字段名或运算符无效",
+    "La condición %d tiene un campo u operador inválido",
+    "条件 %d のフィールド名または演算子が無効です"
+  ],
+  [
+    "조건 %d의 필드 이름에는 NUL 문자를 사용할 수 없습니다",
+    "Condition %d field name must not contain NUL",
+    "条件 %d 的字段名不得包含 NUL",
+    "El campo de la condición %d no puede contener NUL",
+    "条件 %d のフィールド名に NUL は使用できません"
+  ],
+  [
+    "조건 %d: eq, neq, contains 연산자만 지원합니다",
+    "Condition %d: only eq, neq and contains are supported",
+    "条件 %d：仅支持 eq、neq、contains",
+    "Condición %d: solo se admiten eq, neq y contains",
+    "条件 %d：eq、neq、contains のみ対応しています"
+  ],
+  [
+    "조건 값은 4096바이트 이하여야 합니다",
+    "Condition value must not exceed 4096 bytes",
+    "条件值不得超过 4096 字节",
+    "El valor no debe superar 4096 bytes",
+    "条件値は 4096 バイト以下にしてください"
+  ],
+  [
+    "contains 조건 값은 문자열이어야 합니다",
+    "contains requires a string value",
+    "contains 的值必须为字符串",
+    "contains requiere una cadena",
+    "contains の値は文字列にしてください"
+  ],
+  [
+    "조건 값은 null이 아닌 문자열·숫자·참거짓이어야 합니다",
+    "Condition value must be a non-null string, number or boolean",
+    "条件值必须为非 null 字符串、数字或布尔值",
+    "El valor debe ser cadena, número o booleano no nulo",
+    "条件値は null 以外の文字列・数値・真偽値にしてください"
+  ],
+  [
+    "%s 로그는 올바른 UTF-8이어야 합니다",
+    "%s logs must be valid UTF-8",
+    "%s 日志必须为有效 UTF-8",
+    "Los registros %s deben ser UTF-8 válido",
+    "%s ログは有効な UTF-8 にしてください"
+  ],
+  [
+    "%s 로그 배열을 읽을 수 없습니다",
+    "Cannot read %s log array",
+    "无法读取 %s 日志数组",
+    "No se puede leer la matriz de registros %s",
+    "%s ログ配列を読み取れません"
+  ],
+  [
+    "로그 이벤트 합계는 2000개 이하여야 합니다",
+    "At most 2000 log events are allowed",
+    "日志事件合计不得超过 2000 个",
+    "Se permiten como máximo 2000 eventos",
+    "ログイベントの合計は 2000 件以下にしてください"
+  ],
+  [
+    "%s 로그 배열의 %d번째 이벤트: %s",
+    "%s log array, event %d: %s",
+    "%s 日志数组第 %d 个事件：%s",
+    "Matriz %s, evento %d: %s",
+    "%s ログ配列のイベント %d：%s"
+  ],
+  [
+    "%s 로그의 각 이벤트는 JSON 객체여야 합니다",
+    "Each %s log event must be a JSON object",
+    "%s 日志的每个事件必须是 JSON 对象",
+    "Cada evento de %s debe ser un objeto JSON",
+    "%s ログの各イベントは JSON オブジェクトにしてください"
+  ],
+  [
+    "이벤트 하나는 128 KiB 이하여야 합니다",
+    "Each event must not exceed 128 KiB",
+    "每个事件不得超过 128 KiB",
+    "Cada evento no debe superar 128 KiB",
+    "各イベントは 128 KiB 以下にしてください"
+  ],
+  [
+    "%s 로그 배열이 완전하지 않습니다",
+    "%s log array is incomplete",
+    "%s 日志数组不完整",
+    "La matriz de registros %s está incompleta",
+    "%s ログ配列が不完全です"
+  ],
+  [
+    "%s 로그 배열 뒤에 다른 값이 있습니다",
+    "Unexpected value after %s log array",
+    "%s 日志数组之后有多余值",
+    "Hay un valor adicional tras la matriz %s",
+    "%s ログ配列の後に余分な値があります"
+  ],
+  [
+    "%s 로그 %d행:",
+    "%s logs, line %d:",
+    "%s 日志第 %d 行：",
+    "Registros %s, línea %d:",
+    "%s ログの %d 行目："
+  ],
+  [
+    "로그는 비어 있지 않은 UTF-8 JSONL이며 2 MiB 이하여야 합니다",
+    "Logs must be nonempty UTF-8 JSONL, at most 2 MiB",
+    "日志必须是非空 UTF-8 JSONL，且不超过 2 MiB",
+    "Los registros deben ser JSONL UTF-8 no vacío de hasta 2 MiB",
+    "ログは空でない UTF-8 JSONL、2 MiB 以下にしてください"
+  ],
+  [
+    "각 데이터셋은 최대 %d개 이벤트입니다",
+    "Each dataset allows at most %d events",
+    "每个数据集最多 %d 个事件",
+    "Cada conjunto admite hasta %d eventos",
+    "各データセットは最大 %d 件です"
+  ],
+  [
+    "%d행 JSON 또는 필드를 확인하세요",
+    "Check JSON or fields on line %d",
+    "请检查第 %d 行的 JSON 或字段",
+    "Compruebe el JSON o los campos de la línea %d",
+    "%d 行目の JSON またはフィールドを確認してください"
+  ],
+  [
+    "%d행 event_id는 공백 없는 1~128바이트 식별자여야 합니다",
+    "Line %d event_id must be 1–128 bytes without spaces",
+    "第 %d 行 event_id 必须为不含空格的 1–128 字节标识符",
+    "El event_id de la línea %d debe tener 1–128 bytes sin espacios",
+    "%d 行目の event_id は空白なしの 1～128 バイトにしてください"
+  ],
+  [
+    "중복 event_id: %s",
+    "Duplicate event_id: %s",
+    "重复 event_id：%s",
+    "event_id duplicado: %s",
+    "event_id が重複しています：%s"
+  ],
+  [
+    "%d행 label은 attack 또는 benign이어야 합니다",
+    "Line %d label must be attack or benign",
+    "第 %d 行 label 必须为 attack 或 benign",
+    "El label de la línea %d debe ser attack o benign",
+    "%d 行目の label は attack または benign にしてください"
+  ],
+  [
+    "%d행 fields는 1~64개 스칼라 필드여야 합니다",
+    "Line %d fields must contain 1–64 scalar fields",
+    "第 %d 行 fields 必须包含 1–64 个标量字段",
+    "fields de la línea %d debe contener 1–64 campos escalares",
+    "%d 行目の fields は 1～64 個のスカラーフィールドにしてください"
+  ],
+  [
+    "%d행 필드 이름을 확인하세요",
+    "Check field names on line %d",
+    "请检查第 %d 行的字段名",
+    "Compruebe los campos de la línea %d",
+    "%d 行目のフィールド名を確認してください"
+  ],
+  [
+    "%d행 %s 값은 4096바이트 이하 문자열·수·불리언이어야 합니다",
+    "Line %d field %s must be a string, number or boolean up to 4096 bytes",
+    "第 %d 行 %s 必须为不超过 4096 字节的字符串、数字或布尔值",
+    "Línea %d, %s debe ser cadena, número o booleano de hasta 4096 bytes",
+    "%d 行目の %s は 4096 バイト以下の文字列・数値・真偽値にしてください"
+  ],
+  [
+    "%d행 시간은 RFC3339 형식이어야 합니다",
+    "Line %d timestamps must use RFC3339",
+    "第 %d 行时间必须为 RFC3339 格式",
+    "La hora de la línea %d debe usar RFC3339",
+    "%d 行目の日時は RFC3339 形式にしてください"
+  ],
+  [
+    "%d행 경보 시간에는 occurred_at이 필요합니다",
+    "Line %d alert timestamps require occurred_at",
+    "第 %d 行警报时间需要 occurred_at",
+    "Las horas de alerta de la línea %d requieren occurred_at",
+    "%d 行目のアラート時刻には occurred_at が必要です"
+  ],
+  [
+    "%d행 경보 시간은 공격 시간 이전일 수 없습니다",
+    "Line %d alert time cannot precede attack time",
+    "第 %d 行警报时间不得早于攻击时间",
+    "La alerta de la línea %d no puede ser anterior al ataque",
+    "%d 行目のアラート時刻は攻撃時刻より前にできません"
+  ],
+  [
+    "%d행은 동일 fields 내용을 가진 중복 이벤트입니다",
+    "Line %d duplicates an event with identical fields",
+    "第 %d 行为 fields 内容相同的重复事件",
+    "La línea %d duplica un evento con fields idénticos",
+    "%d 行目は fields が同一の重複イベントです"
+  ],
+  [
+    "JSONL의 한 행은 64 KiB 이하여야 합니다",
+    "Each JSONL line must not exceed 64 KiB",
+    "每行 JSONL 不得超过 64 KiB",
+    "Cada línea JSONL no debe superar 64 KiB",
+    "JSONL の各行は 64 KiB 以下にしてください"
+  ],
+  [
+    "로그에 이벤트가 없습니다",
+    "No events in logs",
+    "日志中没有事件",
+    "Los registros no contienen eventos",
+    "ログにイベントがありません"
+  ],
+  [
+    "규칙 이름은 1~120자여야 합니다",
+    "Rule name must contain 1–120 characters",
+    "规则名称必须为 1–120 个字符",
+    "El nombre debe tener 1–120 caracteres",
+    "規則名は 1～120 文字にしてください"
+  ],
+  [
+    "규칙 any는 1~%d개 분기여야 합니다",
+    "Rule any must contain 1–%d branches",
+    "规则 any 必须包含 1–%d 个分支",
+    "any debe contener 1–%d ramas",
+    "規則の any は 1～%d 個の分岐にしてください"
+  ],
+  [
+    "all은 1~%d개 조건이어야 합니다",
+    "all must contain 1–%d conditions",
+    "all 必须包含 1–%d 个条件",
+    "all debe contener 1–%d condiciones",
+    "all は 1～%d 個の条件にしてください"
+  ],
+  [
+    "규칙은 fields 내부의 유효한 필드만 참조할 수 있습니다",
+    "Rules may reference only valid fields inside fields",
+    "规则只能引用 fields 内的有效字段",
+    "Las reglas solo pueden referenciar campos válidos dentro de fields",
+    "規則は fields 内の有効なフィールドのみ参照できます"
+  ],
+  [
+    "지원 연산자는 equals와 contains입니다",
+    "Supported operators are equals and contains",
+    "支持的运算符为 equals 和 contains",
+    "Los operadores admitidos son equals y contains",
+    "対応する演算子は equals と contains です"
+  ],
+  [
+    "조건 값은 1~1024바이트여야 합니다",
+    "Condition values must contain 1–1024 bytes",
+    "条件值必须为 1–1024 字节",
+    "Los valores deben tener 1–1024 bytes",
+    "条件値は 1～1024 バイトにしてください"
+  ],
+  [
+    "시나리오(1~200자), 메모(4000자 이하), 연결 ID를 확인하세요",
+    "Check scenario (1–200 characters), notes (up to 4000) and linked IDs",
+    "请检查场景（1–200 字符）、备注（最多 4000 字符）和关联 ID",
+    "Compruebe escenario (1–200 caracteres), notas (hasta 4000) e ID vinculados",
+    "シナリオ（1～200 文字）、メモ（4000 文字以下）、関連 ID を確認してください"
+  ],
+  [
+    "두 데이터셋 합계는 2 MiB 이하여야 합니다",
+    "Both datasets together must not exceed 2 MiB",
+    "两个数据集合计不得超过 2 MiB",
+    "Ambos conjuntos no deben superar 2 MiB en total",
+    "両データセットの合計は 2 MiB 以下にしてください"
+  ],
+  [
+    "개선용과 평가용 데이터가 겹칩니다: %s",
+    "Tuning and evaluation data overlap: %s",
+    "调整与评估数据重叠：%s",
+    "Los datos de ajuste y evaluación se solapan: %s",
+    "調整用と評価用のデータが重複しています：%s"
+  ],
+  [
+    "HTTPS 관리 주소만 입력해 주세요 (경로·계정·쿼리 제외)",
+    "Enter only an HTTPS management address without path, account or query",
+    "仅输入 HTTPS 管理地址，不含路径、账户或查询",
+    "Introduzca solo la dirección HTTPS sin ruta, cuenta ni consulta",
+    "パス・アカウント・クエリを含まない HTTPS 管理アドレスを入力してください"
+  ],
+  [
+    "인덱스와 서로 다른 감사·경보 sourcetype이 필요합니다",
+    "An index and distinct audit/alert sourcetypes are required",
+    "需要索引和不同的审计及警报 sourcetype",
+    "Se requiere un índice y sourcetypes distintos para auditoría y alertas",
+    "インデックスと異なる監査・アラート sourcetype が必要です"
+  ],
+  [
+    "상관 ID·조치 필드 이름을 확인해 주세요",
+    "Check correlation ID and action field names",
+    "请检查关联 ID 和操作字段名",
+    "Compruebe los campos de correlación y acción",
+    "相関 ID・アクションのフィールド名を確認してください"
+  ],
+  [
+    "인증서 SHA-256은 64자리 16진수여야 합니다",
+    "Certificate SHA-256 must contain 64 hexadecimal characters",
+    "证书 SHA-256 必须是 64 位十六进制",
+    "El SHA-256 del certificado debe tener 64 caracteres hexadecimales",
+    "証明書 SHA-256 は 64 桁の 16 進数にしてください"
+  ],
+  [
+    "토큰 또는 계정 인증 중 하나를 사용해 주세요",
+    "Use either token or account authentication",
+    "请选择令牌或账户认证之一",
+    "Utilice autenticación por token o cuenta, no ambas",
+    "トークン認証またはアカウント認証のいずれかを使用してください"
+  ],
+  [
+    "연결 계정과 비밀번호가 필요합니다",
+    "Connection username and password are required",
+    "需要连接用户名和密码",
+    "Se requieren usuario y contraseña de conexión",
+    "接続ユーザー名とパスワードが必要です"
+  ],
+  [
+    "Splunk 조회가 HTTP %d로 거절됐습니다. 연결 계정과 검색 권한을 확인해 주세요",
+    "Splunk query rejected with HTTP %d. Check account and search permissions",
+    "Splunk 查询被 HTTP %d 拒绝。请检查账户和搜索权限",
+    "Splunk rechazó la consulta con HTTP %d. Compruebe cuenta y permisos",
+    "Splunk クエリが HTTP %d で拒否されました。アカウントと検索権限を確認してください"
+  ],
+  [
+    "실행 식별자 또는 조회 시간 범위를 확인해 주세요 (최대 24시간)",
+    "Check execution ID and query time range (up to 24 hours)",
+    "请检查执行 ID 和查询时段（最多 24 小时）",
+    "Compruebe el ID de ejecución y el intervalo (hasta 24 horas)",
+    "実行 ID と検索期間（最大 24 時間）を確認してください"
+  ],
+  [
+    "Webhook 주소가 없습니다",
+    "Webhook URL is missing",
+    "缺少Webhook地址",
+    "Falta la URL del webhook",
+    "Webhook URLがありません"
+  ],
+  [
+    "Webhook 주소가 올바르지 않습니다",
+    "Invalid webhook URL",
+    "Webhook地址无效",
+    "URL de webhook no válida",
+    "Webhook URLが無効です"
+  ],
+  [
+    "응답을 해석하지 못했습니다",
+    "response could not be parsed",
+    "响应解析失败",
+    "no se pudo interpretar la respuesta",
+    "応答を解析できませんでした"
+  ],
+  [
+    "에서 오류가 발생했습니다",
+    " returned an error",
+    "返回了错误",
+    " devolvió un error",
+    "でエラーが発生しました"
+  ],
+  [
+    "Webhook 주소를 해석하지 못했습니다",
+    "Could not parse webhook URL",
+    "无法解析Webhook地址",
+    "No se pudo interpretar la URL del webhook",
+    "Webhook URLを解析できませんでした"
+  ],
+  [
+    "주소를 해석할 수 없습니다",
+    "Could not parse address",
+    "无法解析地址",
+    "No se pudo interpretar la dirección",
+    "アドレスを解析できません"
+  ],
+  [
+    "http 또는 https 만 지원합니다. 받은 값",
+    "Only http or https is supported. Received",
+    "仅支持http或https。收到",
+    "Solo se admite http o https. Recibido",
+    "httpまたはhttpsのみ対応しています。受信値"
+  ],
+  [
+    "호스트 이름이 없습니다",
+    "Hostname is missing",
+    "缺少主机名",
+    "Falta el nombre de host",
+    "ホスト名がありません"
+  ],
+  [
+    "로컬 또는 링크 로컬 주소 %s 로는 전송하지 않습니다 (로컬 서비스로 보내야 하면 %s=1 로 설정하세요)",
+    "Delivery to local or link-local address %s is blocked (set %s=1 only if local delivery is required)",
+    "不向本地或链路本地地址%s发送（确需发送到本地服务时设置%s=1）",
+    "Se bloquea el envío a la dirección local o de enlace local %s (configure %s=1 solo si necesita envío local)",
+    "ローカル・リンクローカルアドレス%sには送信しません（ローカル送信が必要な場合のみ%s=1を設定）"
+  ],
+  [
+    "SMTP 서버 주소가 없습니다",
+    "SMTP server address is missing",
+    "缺少SMTP服务器地址",
+    "Falta la dirección del servidor SMTP",
+    "SMTPサーバーのアドレスがありません"
+  ],
+  [
+    "SMTP 포트가 올바르지 않습니다 (1-65535 범위여야 합니다)",
+    "Invalid SMTP port (must be 1-65535)",
+    "SMTP端口无效（须为1-65535）",
+    "Puerto SMTP no válido (debe estar entre 1 y 65535)",
+    "SMTPポートが無効です（1～65535が必要）"
+  ],
+  [
+    "발신자 주소가 없습니다",
+    "Sender address is missing",
+    "缺少发件人地址",
+    "Falta la dirección del remitente",
+    "送信者アドレスがありません"
+  ],
+  [
+    "수신자 주소가 최소 하나 필요합니다",
+    "At least one recipient address is required",
+    "至少需要一个收件人地址",
+    "Se requiere al menos una dirección de destinatario",
+    "受信者アドレスが少なくとも一つ必要です"
+  ],
+  [
+    "STARTTLS 실패",
+    "STARTTLS failed",
+    "STARTTLS失败",
+    "Error de STARTTLS",
+    "STARTTLS失敗"
+  ],
+  [
+    "자격 증명 전송을 거부했습니다: 연결이 암호화되지 않았습니다. TLS 를 켜거나, 465 포트(암시적 TLS)를 사용하거나, 「TLS 사용」을 체크하세요",
+    "Refused to send credentials over an unencrypted connection. Enable TLS, use port 465 (implicit TLS), or select Use TLS",
+    "拒绝通过未加密连接发送凭据。请启用TLS、使用465端口（隐式TLS）或勾选使用TLS",
+    "Se rechazó enviar credenciales por una conexión sin cifrar. Active TLS, use el puerto 465 (TLS implícito) o seleccione Usar TLS",
+    "暗号化されていない接続での認証情報送信を拒否しました。TLSを有効にするか、ポート465（暗黙的TLS）を使用するか、TLS使用を選択してください"
+  ],
+  [
+    "SMTP 인증 실패",
+    "SMTP authentication failed",
+    "SMTP认证失败",
+    "Error de autenticación SMTP",
+    "SMTP認証失敗"
+  ],
+  [
+    "발신자 %s 주소가 거부되었습니다",
+    "Sender address %s was rejected",
+    "发件人地址%s被拒绝",
+    "Se rechazó la dirección del remitente %s",
+    "送信者アドレス%sが拒否されました"
+  ],
+  [
+    "수신자 %s 주소가 거부되었습니다",
+    "Recipient address %s was rejected",
+    "收件人地址%s被拒绝",
+    "Se rechazó la dirección del destinatario %s",
+    "受信者アドレス%sが拒否されました"
+  ],
+  [
+    "SMTP DATA 실패",
+    "SMTP DATA failed",
+    "SMTP DATA失败",
+    "Error de SMTP DATA",
+    "SMTP DATA失敗"
+  ],
+  [
+    "메일 본문 쓰기 실패",
+    "Failed to write email body",
+    "邮件正文写入失败",
+    "Error al escribir el cuerpo del correo",
+    "メール本文の書き込み失敗"
+  ],
+  [
+    "메일 제출 실패",
+    "Failed to submit email",
+    "邮件提交失败",
+    "Error al enviar el correo",
+    "メール送信失敗"
+  ],
+  [
+    "SMTP 서버 연결 실패",
+    "SMTP server connection failed",
+    "SMTP服务器连接失败",
+    "Error de conexión al servidor SMTP",
+    "SMTPサーバーへの接続失敗"
+  ],
+  [
+    "SMTP 핸드셰이크 실패",
+    "SMTP handshake failed",
+    "SMTP握手失败",
+    "Error de negociación SMTP",
+    "SMTPハンドシェイク失敗"
+  ],
+  [
+    "올바르지 않은 최소 심각도입니다: %q. low / medium / high / critical 중에서 선택하거나, 비워 두면 제한하지 않습니다",
+    "Invalid minimum severity: %q. Choose low / medium / high / critical, or leave empty for no limit",
+    "最低严重级别无效：%q。请选择low / medium / high / critical，留空则不限制",
+    "Gravedad mínima no válida: %q. Elija low / medium / high / critical o deje vacío para no limitar",
+    "最小深刻度が無効です: %q。low / medium / high / criticalから選択するか、制限なしの場合は空にしてください"
+  ],
+  [
+    "대상 주소를 해석할 수 없습니다",
+    "Could not resolve target address",
+    "无法解析目标地址",
+    "No se pudo resolver la dirección de destino",
+    "対象アドレスを解決できません"
+  ],
+  [
+    "리다이렉트가 너무 많습니다",
+    "Too many redirects",
+    "重定向次数过多",
+    "Demasiadas redirecciones",
+    "リダイレクトが多すぎます"
+  ],
+  [
+    "다른 호스트로의 리다이렉트는 허용하지 않습니다",
+    "Redirects to a different host are not allowed",
+    "不允许重定向到其他主机",
+    "No se permiten redirecciones a otro host",
+    "別ホストへのリダイレクトは許可されていません"
+  ],
+  [
+    "요청 본문을 만들지 못했습니다",
+    "Could not create request body",
+    "无法构建请求正文",
+    "No se pudo crear el cuerpo de la solicitud",
+    "リクエスト本文を作成できませんでした"
+  ],
+  [
+    "요청 주소가 올바르지 않습니다",
+    "Invalid request URL",
+    "请求地址无效",
+    "URL de solicitud no válida",
+    "リクエストURLが無効です"
+  ],
+  [
+    "요청에 실패했습니다",
+    "Request failed",
+    "请求失败",
+    "Error de solicitud",
+    "リクエスト失敗"
+  ],
+  [
+    "응답을 읽지 못했습니다",
+    "Could not read response",
+    "无法读取响应",
+    "No se pudo leer la respuesta",
+    "応答を読み取れませんでした"
+  ],
+  [
+    "상대 서버가 요청을 제한하거나 응답이 지연되었습니다",
+    "Remote server rate limit or response timeout",
+    "远程服务器限流或响应超时",
+    "Límite de solicitudes o tiempo de respuesta agotado en el servidor remoto",
+    "相手サーバーのリクエスト制限または応答タイムアウト"
+  ],
+  [
+    "상대 서버에 오류가 발생했습니다",
+    "Remote server error",
+    "远程服务器错误",
+    "Error del servidor remoto",
+    "相手サーバーのエラー"
+  ],
+  [
+    "상대 서버가 요청을 거부했습니다",
+    "Remote server rejected the request",
+    "远程服务器拒绝了请求",
+    "El servidor remoto rechazó la solicitud",
+    "相手サーバーがリクエストを拒否しました"
+  ],
+  [
+    "등록되지 않은 채널 유형입니다",
+    "Unknown channel type",
+    "未注册的渠道类型",
+    "Tipo de canal desconocido",
+    "未登録のチャネル種類です"
+  ],
+  [
+    "%s 필드의 내용에 마스킹 표시(%q)가 들어 있습니다. 이 필드는 전체를 비워 두어 기존 값을 유지하거나 전체를 새 값으로 제출해야 하며, 구조체 내부에 마스킹 표시를 끼워 넣을 수 없습니다",
+    "Field %s contains a masking marker (%q). Leave the entire field empty to preserve its value, or submit a complete new value; do not insert masking markers inside structured data",
+    "字段%s含有掩码标记（%q）。请将整个字段留空以保留原值，或提交完整新值，不可在结构化数据内部插入掩码标记",
+    "El campo %s contiene una marca de enmascaramiento (%q). Deje todo el campo vacío para conservar el valor o envíe un valor nuevo completo; no inserte marcas dentro de datos estructurados",
+    "フィールド%sにマスク記号（%q）が含まれます。既存値を保持するにはフィールド全体を空にするか、新しい完全な値を送信してください。構造内にマスク記号を挿入できません"
+  ],
+  [
+    "Bot Token이 없습니다",
+    "Bot token is missing",
+    "缺少机器人令牌",
+    "Falta el token del bot",
+    "Botトークンがありません"
+  ],
+  [
+    "Chat ID가 없습니다",
+    "Chat ID is missing",
+    "缺少聊天ID",
+    "Falta el ID del chat",
+    "Chat IDがありません"
+  ],
+  [
+    "API 주소가 올바르지 않습니다",
+    "Invalid API URL",
+    "API地址无效",
+    "URL de API no válida",
+    "API URLが無効です"
+  ],
+  [
+    "Telegram 요청 제한에 걸렸습니다",
+    "Telegram rate limit reached",
+    "达到Telegram请求限制",
+    "Se alcanzó el límite de solicitudes de Telegram",
+    "Telegramのリクエスト制限に達しました"
+  ],
+  [
+    "Telegram 응답 오류",
+    "Telegram response error",
+    "Telegram响应错误",
+    "Error de respuesta de Telegram",
+    "Telegram応答エラー"
+  ],
+  [
+    "API 주소를 조합하지 못했습니다 (API 주소: %s)",
+    "Could not construct API URL (API URL: %s)",
+    "无法构建API地址（API地址：%s）",
+    "No se pudo construir la URL de API (URL de API: %s)",
+    "API URLを構成できませんでした（API URL: %s）"
+  ],
+  [
+    "대상 URL이 없습니다",
+    "Target URL is missing",
+    "缺少目标URL",
+    "Falta la URL de destino",
+    "対象URLがありません"
+  ],
+  [
+    "대상 URL이 올바르지 않습니다",
+    "Invalid target URL",
+    "目标URL无效",
+    "URL de destino no válida",
+    "対象URLが無効です"
+  ],
+  [
+    "지원하지 않는 메서드입니다: %s (GET/POST/PUT/PATCH 중에서 선택하세요)",
+    "Unsupported method: %s (choose GET/POST/PUT/PATCH)",
+    "不支持的方法：%s（请选择GET/POST/PUT/PATCH）",
+    "Método no admitido: %s (elija GET/POST/PUT/PATCH)",
+    "未対応のメソッドです: %s（GET/POST/PUT/PATCHから選択）"
+  ],
+  [
+    "요청 본문 템플릿 문법이 올바르지 않습니다",
+    "Invalid request body template syntax",
+    "请求正文模板语法无效",
+    "Sintaxis no válida en la plantilla del cuerpo de la solicitud",
+    "リクエスト本文テンプレートの構文が無効です"
+  ],
+  [
+    "요청 본문 템플릿의 렌더링 결과가 올바른 JSON이 아닙니다",
+    "Request body template did not render valid JSON",
+    "请求正文模板渲染结果不是有效JSON",
+    "La plantilla del cuerpo de la solicitud no produjo JSON válido",
+    "リクエスト本文テンプレートの結果が有効なJSONではありません"
+  ],
+  [
+    "요청 본문 템플릿을 렌더링하지 못했습니다",
+    "Could not render request body template",
+    "无法渲染请求正文模板",
+    "No se pudo renderizar la plantilla del cuerpo de la solicitud",
+    "リクエスト本文テンプレートを処理できませんでした"
+  ],
+  [
+    "WeCom 요청이 제한되었습니다",
+    "WeCom request was rate-limited",
+    "WeCom请求被限流",
+    "Se limitó la solicitud de WeCom",
+    "WeComリクエストが制限されました"
+  ],
+  [
+    "보관을 완료했지만 전용 트래픽 핫 스토리지 정리에 실패했습니다(보관 패키지는 복원할 수 있습니다): ",
+    "Archiving completed but dedicated traffic hot storage cleanup failed (the archive remains restorable): ",
+    "归档完成，但专用流量热存储清理失败（归档仍可恢复）：",
+    "El archivo se completó, pero falló la limpieza del almacenamiento activo de tráfico (se puede restaurar el archivo): ",
+    "保管は完了しましたが専用トラフィックホットストレージの整理に失敗しました（保管データは復元可能です）: "
+  ],
+  [
+    "보관을 완료했지만 임시 디렉터리 정리에 실패했습니다: ",
+    "Archiving completed but temporary directory cleanup failed: ",
+    "归档完成，但临时目录清理失败：",
+    "El archivo se completó, pero falló la limpieza del directorio temporal: ",
+    "保管は完了しましたが一時ディレクトリの整理に失敗しました: "
+  ],
+  [
+    "작업 복원을 완료했지만 일부 연관 항목이 온전히 복원되지 못했습니다",
+    "Task restore completed but some related items were not fully restored",
+    "任务恢复完成，但部分关联项目未完全恢复",
+    "Se restauró la tarea, pero algunos elementos relacionados no se restauraron por completo",
+    "タスクの復元は完了しましたが一部の関連項目は完全に復元されませんでした"
+  ],
+  [
+    "보관 id %d 가 유효하지 않습니다",
+    "Invalid archive ID %d",
+    "归档ID %d无效",
+    "ID de archivo %d no válido",
+    "保管ID %dが無効です"
+  ],
+  [
+    "알 수 없는 오류",
+    "unknown error",
+    "未知错误",
+    "error desconocido",
+    "不明なエラー"
+  ]
+]

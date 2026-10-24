@@ -5,10 +5,13 @@ import { useTranslations } from "next-intl";
 import { api } from "@/lib/api";
 import type { Agent } from "@/lib/types";
 
+import sources from "./builtin-agent-sources.json";
+
+const defaults: Record<string, { name: string; description: string }> = sources;
+
 // 기본 에이전트(builtin)의 이름·설명·프롬프트 변수 라벨은 DB 시드 데이터라
 // 중국어로만 들어 있다(db/db.go 의 builtinAgents, server/finding_retests.go 의
-// 漏洞复测 에이전트). DB 값을 언어별로 둘 수 없고 시드가 ON CONFLICT DO NOTHING 이라
-// 이미 설치된 인스턴스에는 반영되지도 않으므로, 화면에서는 key 로 메시지 파일
+// 漏洞复测 에이전트). 저장된 값을 변경하지 않고 화면에서는 key 로 메시지 파일
 // (web/messages/{ko,en,zh,es,ja}.json 의 builtinAgents 네임스페이스)에서 번역을 찾아
 // 보여 주고, 없으면 DB 값을 그대로 쓴다. 사용자가 만든 에이전트는 항상 DB 값.
 
@@ -16,6 +19,9 @@ import type { Agent } from "@/lib/types";
 // 심은 고정 key 라 번역 대상에 포함한다. builtin=true 인 에이전트(goals/planner/
 // mainagent/worker/auto/pentest)는 agent.builtin 으로 걸러지므로 여기 둘 필요가 없다.
 const SYSTEM_SEEDED_AGENT_KEYS = new Set(["retester"]);
+const REPORTER_NAME = "보고서 작성";
+const REPORTER_DESCRIPTION =
+  "취약점 상세 보고서 작성: 취약점을 발견하면 자동으로 트리거되어, 증거와 실행 과정을 조회한 뒤 Markdown 보고서를 작성해 해당 취약점에 기록합니다.";
 
 function isSystemSeeded(agent: { key: string; builtin?: boolean }): boolean {
   return !!agent.builtin || SYSTEM_SEEDED_AGENT_KEYS.has(agent.key);
@@ -29,16 +35,24 @@ export function useAgentLabels() {
   // 호출 쪽이 이 함수들을 useMemo·useCallback 의존성으로 쓰므로(대화 그룹·필터 계산),
   // 언어(t)가 바뀔 때만 새 묶음을 만든다. 매 렌더 새 객체면 그 계산이 매번 다시 돈다.
   return useMemo(() => {
-    // name 은 기본 에이전트면 번역 이름을, 아니면 DB 이름(agent.name)을 돌려준다.
+    // Translate only unchanged shipped values; user-edited names remain visible.
     const name = (agent: { key: string; name: string; builtin?: boolean }): string => {
-      if (isSystemSeeded(agent) && t.has(`${agent.key}.name`)) return t(`${agent.key}.name`);
+      if (agent.key === "reporter" && agent.name === REPORTER_NAME) return t("reporter.name");
+      if (isSystemSeeded(agent) && defaults[agent.key]?.name === agent.name && t.has(`${agent.key}.name`))
+        return t(`${agent.key}.name`);
       return agent.name;
     };
 
-    // description 은 기본 에이전트면 번역 설명을, 아니면 DB 설명(없으면 빈 문자열)을
+    // description 은 원래 기본값과 일치할 때만 번역하고, 그 외에는 DB 설명을
     // 돌려준다. 빈 설명 폴백 문구는 호출 쪽에서 기존대로 붙인다.
     const description = (agent: { key: string; description?: string; builtin?: boolean }): string => {
-      if (isSystemSeeded(agent) && t.has(`${agent.key}.description`)) return t(`${agent.key}.description`);
+      if (agent.key === "reporter" && agent.description === REPORTER_DESCRIPTION) return t("reporter.description");
+      if (
+        isSystemSeeded(agent) &&
+        defaults[agent.key]?.description === agent.description &&
+        t.has(`${agent.key}.description`)
+      )
+        return t(`${agent.key}.description`);
       return agent.description ?? "";
     };
 
@@ -62,7 +76,21 @@ export function useAgentLabels() {
       return fallback;
     };
 
-    return { name, description, nameByKey, varLabel };
+    // Translate only known shipped examples, never user-authored examples.
+    const varExample = (agentKey: string, builtin: boolean, varName: string, fallback: string): string => {
+      const originals: Record<string, string> = {
+        "goals.EngagementDescription": "测试 example.com 站点",
+        "planner.Goal": "拿下 example.com 的管理员权限",
+        "mainagent.Goal": "拿下 example.com 的管理员权限",
+      };
+      const key = `${agentKey}.${varName}`;
+      if (builtin && originals[key] === fallback && t.has(`${agentKey}.examples.${varName}`)) {
+        return t(`${agentKey}.examples.${varName}`);
+      }
+      return fallback;
+    };
+
+    return { name, description, nameByKey, varLabel, varExample };
   }, [t]);
 }
 

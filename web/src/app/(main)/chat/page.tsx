@@ -310,14 +310,16 @@ function LLMProfileRow({
   const t = useTranslations("chat");
   const [open, setOpen] = React.useState(false);
   const activeDefault = profiles.find((p) => p.is_default);
+  const chatgpt = useTranslations("chatgptOAuth");
   const current = selected != null ? profiles.find((p) => Number(p.id) === selected) : null;
   const defaultLabel = activeDefault
     ? t("llmProfile.defaultNamed", { name: activeDefault.name })
     : t("llmProfile.default");
   const label = current ? current.name : defaultLabel;
+  const authProfile = current ?? activeDefault;
 
   return (
-    <div className="flex min-w-0 shrink-0 items-center gap-1 px-1 pt-0.5 pb-1">
+    <div className="flex min-w-0 shrink-0 flex-wrap items-center gap-1 px-1 pt-0.5 pb-1">
       <ZapIcon className="text-muted-foreground/50 size-3 shrink-0" />
       <span className="truncate text-muted-foreground/70 text-xs" title={label}>
         {label}
@@ -376,6 +378,19 @@ function LLMProfileRow({
         </PopoverContent>
       </Popover>
       {rightSlot}
+      {authProfile?.auth_account_id && (
+        <span className="w-full text-muted-foreground text-xs">
+          {authProfile.auth_connected ? chatgpt("usingPlan") : chatgpt("reconnect")} · {authProfile.auth_account_label}{" "}
+          <a
+            className="text-primary underline"
+            href="https://chatgpt.com/settings/usage"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {chatgpt("usage")}
+          </a>
+        </span>
+      )}
     </div>
   );
 }
@@ -473,7 +488,7 @@ function DraftChat({
           <Bot className="text-primary size-6" />
         </div>
         <div className="text-sm font-medium">
-          {t("emptyStart", { agent: agent ? draftLabels.name(agent) : "에이전트" })}
+          {t("emptyStart", { agent: agent ? draftLabels.name(agent) : t("agentFallback") })}
         </div>
         {agent && draftLabels.description(agent) && (
           <p className="text-muted-foreground max-w-md text-xs">{draftLabels.description(agent)}</p>

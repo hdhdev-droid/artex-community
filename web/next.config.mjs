@@ -1,6 +1,15 @@
 import createNextIntlPlugin from "next-intl/plugin";
 
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+
+// Existing web-only development mounts can still run until Compose is recreated.
+const releaseInfo = existsSync(new URL("../version/VERSION", import.meta.url))
+  ? {
+      version: readFileSync(new URL("../version/VERSION", import.meta.url), "utf8").trim(),
+      upstream: JSON.parse(readFileSync(new URL("../version/upstream.json", import.meta.url), "utf8")),
+    }
+  : null;
 
 // 静态导出：`NEXT_EXPORT=1 next build` 产出纯静态目录到 web/out，可直接丢进
 // nginx web 根目录运行。开发(next dev)不设该变量，保留 /api 反代与热更新。
@@ -10,6 +19,7 @@ const isMock = process.env.NEXT_PUBLIC_MOCK === "1";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  env: { NEXT_PUBLIC_RELEASE_INFO: JSON.stringify(releaseInfo) },
   // 避免父目录的 lockfile 影响根目录推断及资源路径生成。
   turbopack: { root: fileURLToPath(new URL(".", import.meta.url)) },
   reactCompiler: true,

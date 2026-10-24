@@ -9,10 +9,12 @@ on:
     branches: ["**"]
     paths:
       - "web/**"
+      - "version/**"
       - ".github/workflows/web.yml"
   pull_request:
     paths:
       - "web/**"
+      - "version/**"
       - ".github/workflows/web.yml"
 
 permissions:

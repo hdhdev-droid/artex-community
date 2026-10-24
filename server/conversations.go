@@ -546,12 +546,12 @@ func (s *Server) conversationRunContext(id int64, busyKey string) (context.Conte
 // transcriptErrorSummary 는 실행이 실패했을 때 활동 전사(transcript)에 남기는 오류 요약을
 // 만든다. label 은 실패한 주체를 가리키며, 채팅 턴은 빈 문자열, 작업 메인 에이전트는
 // "메인 에이전트"를 넣는다. 두 전사 모두 "(…오류: …)" 형태로 같게 렌더되도록 한 곳에 모은다.
-// err 원문은 그대로 보존하고 바깥 라벨만 한국어로 둔다(F9).
+// Preserve the error verbatim; localize only the fixed product labels for new entries.
 func transcriptErrorSummary(label, errMsg string) string {
 	if label != "" {
-		label += " "
+		label = trMsg(label) + " "
 	}
-	return "(" + label + "오류: " + errMsg + ")"
+	return "(" + label + trMsg("오류: ") + errMsg + ")"
 }
 
 func (s *Server) runConversationTurn(ctx context.Context, cancel context.CancelCauseFunc, c *db.Conversation, msg, busyKey string) {

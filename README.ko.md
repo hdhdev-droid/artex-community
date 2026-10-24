@@ -1,6 +1,6 @@
 <div align="center">
 
-# ARTEX 글로벌판
+# ARTEX 커뮤니티판
 
 **LLM 멀티 에이전트가 자율적으로 침투 테스트를 수행하는 시스템** (Go 백엔드 + Next.js 프런트엔드)
 
@@ -11,6 +11,14 @@
 [![ci](https://github.com/jiwoochris/artex-global/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jiwoochris/artex-global/actions/workflows/ci.yml) [![detections](https://github.com/jiwoochris/artex-global/actions/workflows/detections.yml/badge.svg?branch=main)](https://github.com/jiwoochris/artex-global/actions/workflows/detections.yml) [![web](https://github.com/jiwoochris/artex-global/actions/workflows/web.yml/badge.svg?branch=main)](https://github.com/jiwoochris/artex-global/actions/workflows/web.yml) [![license: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 
 </div>
+
+로컬 Docker 개발 환경은 [개발 환경 안내](docs/local-development.md)를 참고하세요. 화면·백엔드·PostgreSQL·진단 서비스를 별도 개발용 구성으로 실행합니다.
+
+## 포크 출처와 상류 업데이트
+
+`artex-community`는 [jiwoochris/artex-global](https://github.com/jiwoochris/artex-global)에서 포크한 프로젝트입니다. 프로젝트 계보는 `Autumn-27/ARTEX → jiwoochris/artex-global → hdhdev-droid/artex-community`입니다.
+
+앞으로 `artex-global`의 개선 사항·보안 수정·신규 버전을 확인하고, 커뮤니티 고유 변경을 보존하면서 필요한 업데이트를 반영합니다. 비교 기준 커밋과 업데이트 절차는 [MAINTAINING.md](MAINTAINING.md#community-upstream)에 기록합니다. 아래 글로벌판 릴리스·이미지·CI 안내는 상류에서 이어받은 정보이며, 커뮤니티판의 배포나 빌드 결과를 의미하지 않습니다.
 
 ---
 
@@ -97,7 +105,7 @@ ARTEX 는 **자신이 소유하거나 서면으로 명시적 허가를 받은 �
 
 > **사전 요구:** Docker 와 Docker Compose. 데이터베이스는 **PostgreSQL** 이며 compose 가 함께 띄웁니다. 탐색에는 **LLM** 이 필요합니다(`ANTHROPIC_API_KEY` 또는 `OPENAI_API_KEY`, UI 에서도 설정 가능).
 
-> **이미지:** `docker-compose.yml` 의 `artex` 서비스는 이 저장소가 릴리스 태그(`v*`)마다 GitHub Container Registry 에 발행하는 글로벌판 이미지 `ghcr.io/jiwoochris/artex-global` 를 받습니다. 기본 태그는 `latest`(가장 최근 릴리스)이고, `.env` 의 `ARTEX_TAG` 로 특정 릴리스에 고정할 수 있습니다. 원본 저장소의 이미지 `autumn27/artex` 는 Docker Hub 에서 내려가 더는 쓰지 않습니다.
+> **이미지:** `docker-compose.yml` 의 `artex` 서비스는 이 저장소가 릴리스 태그(`v*`)마다 GitHub Container Registry 에 발행하는 커뮤니티판 이미지 `ghcr.io/hdhdev-droid/artex-community` 를 받습니다. 기본 태그는 `latest`(가장 최근 릴리스)이고, `.env` 의 `ARTEX_TAG` 로 특정 릴리스에 고정할 수 있습니다. 원본 저장소의 이미지 `autumn27/artex` 는 Docker Hub 에서 내려가 더는 쓰지 않습니다.
 
 ```bash
 git clone https://github.com/jiwoochris/artex-global.git
@@ -114,7 +122,7 @@ docker compose up -d          # artex 이미지 + postgres 를 함께 기동
 
 원본 저장소는 설치 스크립트(`./install.sh`), 사전 컴파일 바이너리(Releases), 소스 단일 바이너리 컴파일 등 여러 방법을 제공합니다. 명령과 절차는 [`README.zh.md`](README.zh.md#安装)의 "安装"(설치) 절에 정리되어 있으며, 아래 핵심만 옮깁니다.
 
-- **설치 스크립트:** `./install.sh` 를 실행하면 Docker 감지·설치 후 "① 전부 Docker" 또는 "② 로컬 컴파일 실행"을 고르게 합니다. "① 전부 Docker" 는 위 빠른 시작과 같은 이미지(`ghcr.io/jiwoochris/artex-global`)를 받아 기동하고, "② 로컬 컴파일 실행"은 아래 **소스에서 단일 바이너리 컴파일**과 같은 방식으로 직접 빌드합니다.
+- **설치 스크립트:** `./install.sh` 를 실행하면 Docker 감지·설치 후 "① 전부 Docker" 또는 "② 로컬 컴파일 실행"을 고르게 합니다. "① 전부 Docker" 는 위 빠른 시작과 같은 이미지(`ghcr.io/hdhdev-droid/artex-community`)를 받아 기동하고, "② 로컬 컴파일 실행"은 아래 **소스에서 단일 바이너리 컴파일**과 같은 방식으로 직접 빌드합니다.
 - **소스에서 단일 바이너리 컴파일:**
 
   ```bash
@@ -131,6 +139,13 @@ docker compose up -d          # artex 이미지 + postgres 를 함께 기동
 ---
 
 ## 설정
+
+최초 관리자 설정 후 **시작 안내**에서 언어와 사용 목적에 맞는 연결을 설정할 수 있습니다.
+기존 사용자는 **시스템 설정 → 시작 안내**로 다시 열 수 있습니다. 모델 설정에는
+OpenRouter OAuth와 ChatGPT 구독 연결을 추가했으며, 연결 후 저장된 프로파일을 직접 활성화합니다.
+ChatGPT 로그인은 ARTEX를 실행하는 컴퓨터의 localhost에서 진행하고, 인증 콜백만
+`http://127.0.0.1:8789/auth/callback`을 사용합니다. 이 변경의 빌드·실계정 검증은 아직 수행하지 않았습니다.
+자세한 실행 조건과 검증 범위는 [로컬 개발 환경](docs/local-development.md#최초-화면-설정)을 참고하십시오.
 
 **데이터베이스**(`config.json`, 또는 환경 변수 `ARTEX_PG_DSN` 로 덮어쓰기):
 

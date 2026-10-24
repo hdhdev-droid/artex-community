@@ -1034,6 +1034,9 @@ export interface LLMProfile {
   proxy?: string;
   model: string;
   api_key_hint?: string;
+  auth_account_id?: string;
+  auth_account_label?: string;
+  auth_connected?: boolean;
   rate_per_second: number;
   rate_per_minute: number;
   context_window_k?: number;
@@ -1565,11 +1568,25 @@ export interface FindingTrafficDetail {
 }
 
 /** GET /api/update/check —— 当前版本与 GitHub 最新正式版的比较结果。 */
+export interface ReleaseInfo {
+  version: string;
+  upstream: {
+    repository: string;
+    version: string;
+    commit: string;
+    describe: string;
+    original_repository: string;
+    original_version: string;
+    original_evidence: string;
+  };
+}
+
 export interface UpdateCheck {
+  release?: ReleaseInfo;
   /** 当前运行的版本；开发构建为 "dev" 或 git describe 的带后缀形式。 */
   current: string;
   /** 运行形态。docker 下换装只作用于容器可写层，重建容器会退回镜像版本。 */
-  mode: "docker" | "binary";
+  mode: "docker" | "binary" | "demo";
   os: string;
   arch: string;
   repo: string;

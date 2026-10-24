@@ -20,6 +20,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Autumn-27/artex/internal/chatgpt"
 	"github.com/Autumn-27/artex/llmrec"
 	"github.com/Autumn-27/norma/agentcore"
 	"github.com/Autumn-27/norma/compaction"
@@ -254,9 +255,16 @@ func (c Config) Provider() string {
 // limiter lives on the single provider instance — so planner + all workers +
 // main agent (which share this provider) are bounded by one shared rate limit.
 func (c Config) NewProvider() (llm.Provider, error) {
+	oauth := chatgpt.AccountID(c.APIKey) != ""
+	if oauth {
+		c.Format, c.BaseURL, c.Proxy, c.SessionHeaderKey = llm.FormatOpenAIResponses, chatgpt.BaseURL, "", ""
+	}
 	client, err := quotaAwareHTTPClient(c.Proxy, c.SessionHeaderKey)
 	if err != nil {
 		return nil, err
+	}
+	if oauth {
+		client = chatgpt.Client(client, c.APIKey)
 	}
 	lc := llm.Config{
 		Format:     c.Format,
@@ -277,10 +285,22 @@ func (c Config) NewProvider() (llm.Provider, error) {
 	lc.RetryInterval = c.Retry.ConnectInterval
 	lc.EmptyResponseRetries = c.Retry.EmptyAttempts
 	lc.EmptyResponseInterval = c.Retry.EmptyInterval
+	// Subscription usage failures must return to the user instead of being
+	// retried as generic transport failures by the SDK.
+	if oauth {
+		lc.MaxRetries, lc.EmptyResponseRetries = -1, -1
+	}
 	if c.RatePerSecond > 0 || c.RatePerMinute > 0 {
 		lc.RateLimit = &llm.RateLimit{PerSecond: c.RatePerSecond, PerMinute: c.RatePerMinute}
 	}
-	return llm.NewProvider(lc)
+	p, err := llm.NewProvider(lc)
+	if err != nil {
+		return nil, err
+	}
+	if oauth {
+		return chatGPTProvider{p}, nil
+	}
+	return p, nil
 }
 
 // IsQuotaExhaustedMessage deliberately recognizes only explicit balance,
@@ -425,6 +445,9 @@ func quotaAwareHTTPClient(proxy, sessionHeaderKey string) (*http.Client, error) 
 // just the collapsed ok/err the UI shows. Bodies are clipped to keep a chatty
 // SSE stream from flooding the log.
 func logTestConnection(c Config, capt *llmrec.Capture) {
+	if chatgpt.AccountID(c.APIKey) != "" {
+		return
+	}
 	attempts := capt.Attempts()
 	if len(attempts) == 0 {
 		log.Printf("[llm-test] %s / %s @ %s — 未发出任何 HTTP 请求(配置解析或建连即失败)",

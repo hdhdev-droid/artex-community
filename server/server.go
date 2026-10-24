@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Autumn-27/artex/internal/chatgpt"
+	"github.com/Autumn-27/artex/internal/l10n"
 	"io"
 	"log"
 	"net"
@@ -109,12 +111,20 @@ const (
 // Server exposes the ARTEX backend over a JSON HTTP API for the shadcn/ui
 // frontend.
 type Server struct {
+	offensiveReviewInitMu  sync.Mutex
+	offensiveReviewRuntime *offensiveReviewRuntime
+
+	investigationMu     sync.Mutex
+	investigationCancel map[int64]context.CancelFunc
+
 	m      *Manager
 	engine *Engine
 	ctx    context.Context
 
 	skillDir string // root directory for skill subdirectories
 	jwtKey   []byte // HS256 signing key loaded from / generated into dataDir/jwt.key
+	llmOAuth llmOAuthState
+	chatGPT  chatGPTOAuth
 
 	// authMu guards the first-run setup token, the cached password hash (tokens
 	// are signed with a key derived from it — see auth.go signingKey) and the
@@ -226,6 +236,10 @@ type triggeredRun struct {
 }
 
 func New(ctx context.Context, m *Manager, skillDir string, dataDir string, keyDir string) *Server {
+	keyDir, err := resolveAuthDir(keyDir, dataDir)
+	if err != nil {
+		log.Fatalf("[auth] storage: %v", err)
+	}
 	key, err := loadOrCreateJWTKey(keyDir, dataDir)
 	if err != nil {
 		log.Fatalf("[auth] JWT key: %v", err)
@@ -238,6 +252,10 @@ func New(ctx context.Context, m *Manager, skillDir string, dataDir string, keyDi
 		taskAgents: map[string]*taskAgentBundle{}, archiveWake: make(chan struct{}, 1)}
 	// First-run protection: cache the password hash and, while none is set, issue
 	// the console setup token (or apply ARTEX_ADMIN_PASSWORD) before any request.
+	s.chatGPT.store = chatgpt.New(keyDir, key)
+	if _, err := s.chatGPT.store.Accounts(); err != nil {
+		log.Fatal("[auth] cannot read ChatGPT credentials; restore the matching JWT key and vault from backup")
+	}
 	s.bootstrapAuth()
 	s.initSideQuestions()
 	// 熔断阈值/冷却是失败路径上的热参数，启动时把全局重试策略推给 Registry 一次；
@@ -263,6 +281,12 @@ func New(ctx context.Context, m *Manager, skillDir string, dataDir string, keyDi
 	// Wire DB-stored prompt templates into the agents (新版方案 §3.3 / §5a). With no
 	// override row, agents keep their built-in defaults — behavior is unchanged.
 	if m.pg != nil {
+		if _, err := m.pg.RecoverInvestigationRuns(ctx); err != nil {
+			log.Printf("[investigation] recover: %v", err)
+		}
+		if _, err := m.pg.RecoverDefensiveCaseRuns(ctx); err != nil {
+			log.Printf("[defensive] recover: %v", err)
+		}
 		agent.PromptOverride = func(key string) (string, bool) {
 			a, err := m.pg.GetAgentByKey(key)
 			if err != nil || a == nil {
@@ -318,6 +342,8 @@ func New(ctx context.Context, m *Manager, skillDir string, dataDir string, keyDi
 		resolveLang := s.outputLanguage
 		agent.OutputLanguage = resolveLang
 		config.CurrentLanguage = resolveLang
+		l10n.Language = resolveLang
+		report.Lang = resolveLang
 		notify.Lang = resolveLang                       // 푸시·이메일의 심각도·상태 라벨도 같은 언어를 따른다
 		wireAgentAugment(m.pg, s.skillDir, s.hostTools) // 可见 skills/MCP + 流量/编排 host 工具装配进 agent 工具集
 		domainReg := buildDomainReg(m.Assets())
@@ -380,7 +406,7 @@ func (s *Server) restoreTaskRuntimes() {
 		// clear stale 'running' intents from a prior crash/restart (no live worker
 		// owns them) so they re-claim instead of spinning forever in the UI.
 		if n, _ := t.Store.ResetRunningIntents(); n > 0 {
-			log.Printf("[engine] task %s 重置 %d 个残留 running 意图为 open", t.ID, n)
+			log.Printf(logT("[engine] task %s 重置 %d 个残留 running 意图为 open"), t.ID, n)
 		}
 		if lifecycle.Paused {
 			s.engine.Pause(t.ID, agent.AbortPausedOnReload)
@@ -759,6 +785,11 @@ func (s *Server) chatAgentRef() *agent.ChatAgent {
 
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
+	s.registerOffensiveAssessments(mux)
+	s.registerPurple(mux)
+	s.registerDefensiveCases(mux)
+	s.registerClosedLoop(mux)
+	mux.HandleFunc("GET /api/aegis/overview", s.aegisOverview)
 	s.registerSideRoutes(mux)
 
 	// Auth routes — exempt from JWT check (handled in requireAuth)
@@ -768,6 +799,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/auth/change-password", s.authChangePassword)
 
 	mux.HandleFunc("GET /api/health", s.health)
+	mux.HandleFunc("GET /api/onboarding/mcp", s.onboardingMCP)
 	mux.HandleFunc("GET /api/stats", s.stats)
 	mux.HandleFunc("GET /api/logs", s.getLogs)
 	mux.HandleFunc("GET /api/logs/history", s.getLogsHistory)
@@ -847,6 +879,12 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/llm", s.getLLM)
 	mux.HandleFunc("POST /api/llm", s.setLLM)
 	mux.HandleFunc("POST /api/llm/test", s.testLLM)
+	mux.HandleFunc("POST /api/llm/oauth/openrouter/start", s.startOpenRouterOAuth)
+	mux.HandleFunc("POST /api/llm/oauth/openrouter/complete", s.completeOpenRouterOAuth)
+	mux.HandleFunc("GET /api/llm/oauth/chatgpt/accounts", s.chatGPTAccounts)
+	mux.HandleFunc("POST /api/llm/oauth/chatgpt/start", s.startChatGPTOAuth)
+	mux.HandleFunc("POST /api/llm/oauth/chatgpt/complete", s.completeChatGPTOAuth)
+	mux.HandleFunc("POST /api/llm/oauth/chatgpt/{action}", s.chatGPTAccountAction)
 
 	// asset system
 	mux.HandleFunc("GET /api/assets", s.listAssets)
@@ -1339,7 +1377,7 @@ func (s *Server) rerunIntent(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 500, err.Error())
 		return
 	}
-	log.Printf("[task] #%s 意图 #%d 已重开(重跑)", t.ID, iid)
+	log.Printf(logT("[task] #%s 意图 #%d 已重开(重跑)"), t.ID, iid)
 	writeJSON(w, 200, map[string]any{"id": t.ID, "reopened": iid, "queued": queued})
 }
 
@@ -1389,7 +1427,7 @@ func (s *Server) rerunBlocked(w http.ResponseWriter, r *http.Request) {
 			writeErr(w, 500, err.Error())
 			return
 		}
-		log.Printf("[task] #%s 批量重开 %d 条 blocked 意图", t.ID, n)
+		log.Printf(logT("[task] #%s 批量重开 %d 条 blocked 意图"), t.ID, n)
 	}
 	writeJSON(w, 200, map[string]any{"id": t.ID, "reopened": n, "queued": queued})
 }
@@ -1398,13 +1436,28 @@ func (s *Server) rerunBlocked(w http.ResponseWriter, r *http.Request) {
 func (s *Server) getLLM(w http.ResponseWriter, r *http.Request) {
 	s.cfgMu.Lock()
 	defer s.cfgMu.Unlock()
+	keySet := s.llmCfg.APIKey != ""
+	if id := chatgpt.AccountID(s.llmCfg.APIKey); id != "" {
+		accounts, err := s.chatGPT.store.Accounts()
+		if err != nil {
+			writeErr(w, 503, err.Error())
+			return
+		}
+		keySet = false
+		for _, a := range accounts {
+			if a.ID == id {
+				keySet = a.Connected
+				break
+			}
+		}
+	}
 	writeJSON(w, 200, map[string]any{
 		"configured":       s.llmOn,
 		"provider":         s.llmCfg.Provider(),
 		"model":            s.llmCfg.Model,
 		"base_url":         s.llmCfg.BaseURL,
 		"proxy":            s.llmCfg.Proxy,
-		"key_set":          s.llmCfg.APIKey != "",
+		"key_set":          keySet,
 		"rate_per_second":  s.llmCfg.RatePerSecond,
 		"rate_per_minute":  s.llmCfg.RatePerMinute,
 		"context_window_k": s.llmCfg.ContextWindowK,
@@ -1531,7 +1584,11 @@ func (s *Server) testLLM(w http.ResponseWriter, r *http.Request) {
 	// 是跑起来之后的事。
 	lat, reply, err := agent.TestConnection(r.Context(), cfg)
 	if err != nil {
-		writeJSON(w, 200, map[string]any{"ok": false, "error": err.Error()})
+		message := err.Error()
+		if chatgpt.AccountID(cfg.APIKey) != "" {
+			message = chatGPTPublicError(err)
+		}
+		writeJSON(w, 200, map[string]any{"ok": false, "error": message})
 		return
 	}
 	// 回传模型实际回复，让"测试通过"有据可查：看得见它确实说了话，而不只是 HTTP 200。
@@ -1637,7 +1694,7 @@ func (s *Server) createTask(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 500, err.Error())
 		return
 	}
-	log.Printf("[task] 新建任务 #%s «%s» 目标: %s", t.ID, req.Description, req.Goal)
+	log.Printf(logT("[task] 新建任务 #%s «%s» 目标: %s"), t.ID, req.Description, req.Goal)
 	// 共享的建后流程(seed + 种子意图 + 后台目标分解 + engine.Run),与 spawn_task 复用同一段。
 	// launchTask 内部异步,不阻塞 UI —— 目标分解在后台可见地进行。
 	s.launchTask(t, req.Description+" "+req.Goal, req.SeedFirstIntent != nil && *req.SeedFirstIntent)
@@ -1777,12 +1834,12 @@ func (s *Server) llmHost() string {
 func (s *Server) seed(t *Task, text string) {
 	scheme, host, port, ok := parseTarget(text)
 	if !ok {
-		log.Printf("[seed] task %s: 未能从 %q 解析出目标 host/IP，不创建站点（请手动配置 scope）", t.ID, text)
+		log.Printf(logT("[seed] task %s: 未能从 %q 解析出目标 host/IP，不创建站点（请手动配置 scope）"), t.ID, text)
 		return
 	}
 	// P0-1 guard: never treat the configured LLM gateway as a target.
 	if gw := s.llmHost(); gw != "" && host == gw {
-		log.Printf("[seed] task %s: 目标 %q 是 LLM 网关，拒绝作为渗透目标", t.ID, host)
+		log.Printf(logT("[seed] task %s: 目标 %q 是 LLM 网关，拒绝作为渗透目标"), t.ID, host)
 		return
 	}
 
@@ -1811,7 +1868,7 @@ func (s *Server) seed(t *Task, text string) {
 			_ = t.Store.Anchor(begin, rootID)
 		}
 	}
-	log.Printf("[seed] task %s: 目标站点 %s", t.ID, u)
+	log.Printf(logT("[seed] task %s: 目标站点 %s"), t.ID, u)
 	// 不在这里 Notify:首轮是否触发统一由 engine.Run 的 HasActiveIntent 决定(种子意图任务
 	// 跳过首轮)。seed 早于 Run 执行,若在此 Notify 会 buffered 到通道、被 plannerLoop 启动时
 	// 消费掉而绕过 Run 的门控 → 种子任务仍误触发首轮。
@@ -1826,13 +1883,13 @@ func (s *Server) seedFirstIntent(t *Task) {
 	summary := fmt.Sprintf("完成任务目标：%s（任务：%s）", t.Goal, t.Description)
 	id, err := t.Store.AddIntent(map[string]any{"summary": summary}, 8, nil, "seed")
 	if err != nil {
-		log.Printf("[seed] task %s: 下发种子意图失败: %v", t.ID, err)
+		log.Printf(logT("[seed] task %s: 下发种子意图失败: %v"), t.ID, err)
 		return
 	}
 	if origin, _ := t.Store.OriginFactID(); origin > 0 {
 		_ = t.Store.Link(origin, db.RelDerivedFrom, id)
 	}
-	log.Printf("[seed] task %s: 已下发种子意图 #%d", t.ID, id)
+	log.Printf(logT("[seed] task %s: 已下发种子意图 #%d"), t.ID, id)
 }
 
 func (s *Server) getTask(w http.ResponseWriter, r *http.Request) {
@@ -2403,7 +2460,7 @@ func (s *Server) patchFinding(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if !notified && from != *body.Status {
-			log.Printf("[notify] 状态变更事件未登记 finding=%d %s→%s（状态已更新）", id, from, *body.Status)
+			log.Printf(logT("[notify] 状态变更事件未登记 finding=%d %s→%s（状态已更新）"), id, from, *body.Status)
 		}
 	}
 	if body.Severity != nil {
@@ -3381,7 +3438,7 @@ func (s *Server) getTrafficBlob(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Length", strconv.FormatInt(size, 10))
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", hash+".bin"))
 	if _, err := io.Copy(w, f); err != nil {
-		log.Printf("[traffic] 下载 blob %s 中断：%v", hash, err)
+		log.Printf(logT("[traffic] 下载 blob %s 中断：%v"), hash, err)
 	}
 }
 

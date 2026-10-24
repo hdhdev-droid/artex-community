@@ -46,6 +46,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { AssetInterceptRulesEditor } from "@/components/asset-intercept-rules-editor";
+import { OnboardingEntry } from "@/components/onboarding-entry";
 import { StatusBadge } from "@/components/status-badge";
 import { TablePagination } from "@/components/table-pagination";
 import { TaskLLMProfileChain } from "@/components/task-llm-profile-chain";
@@ -119,6 +120,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { getDateLocale } from "@/i18n/datetime";
 import { ApiError, api } from "@/lib/api";
 import { getLocalStorageValue, setLocalStorageValue } from "@/lib/local-storage.client";
 import { type SortDirection, useStoredSortPreference } from "@/lib/sort-preference";
@@ -926,8 +928,9 @@ export default function TasksPage() {
             </div>
 
             {tasks.length === 0 ? (
-              <div className="text-muted-foreground mx-4 flex items-center justify-center rounded-lg border border-dashed py-20 text-sm lg:mx-6">
+              <div className="text-muted-foreground mx-4 flex flex-col gap-3 items-center justify-center rounded-lg border border-dashed py-20 text-sm lg:mx-6">
                 {t("empty.noTasks")}
+                <OnboardingEntry />
               </div>
             ) : filtered.length === 0 ? (
               <div className="text-muted-foreground mx-4 flex items-center justify-center rounded-lg border border-dashed py-20 text-sm lg:mx-6">
@@ -992,7 +995,7 @@ export default function TasksPage() {
                         className="hidden @6xl:table-cell"
                         onSort={sortTasksBy}
                       />
-                      <TableHead className="hidden text-right @7xl:table-cell">Token</TableHead>
+                      <TableHead className="hidden text-right @7xl:table-cell">{t("labels.tokens")}</TableHead>
                       <TableHead className="text-right">{t("table.actions")}</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -1613,7 +1616,7 @@ function archiveDate(value?: string): string {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleString();
+  return date.toLocaleString(getDateLocale());
 }
 
 function ArchiveDeleteDialog({
@@ -1637,7 +1640,10 @@ function ArchiveDeleteDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>{t("archive.deleteTitle", { count: archives.length })}</AlertDialogTitle>
           <AlertDialogDescription className="[overflow-wrap:anywhere]">
-            {t("archive.deleteDescription", { size: formatArchiveBytes(bytes), rows: rows.toLocaleString() })}
+            {t("archive.deleteDescription", {
+              size: formatArchiveBytes(bytes),
+              rows: rows.toLocaleString(getDateLocale()),
+            })}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -1955,7 +1961,9 @@ function TaskArchivesPanel({ onChanged }: { onChanged: () => void }) {
                     >
                       {archiveCompressionLabel(t, archive)}
                     </TableCell>
-                    <TableCell className="text-xs tabular-nums">{archiveDataTotal(archive).toLocaleString()}</TableCell>
+                    <TableCell className="text-xs tabular-nums">
+                      {archiveDataTotal(archive).toLocaleString(getDateLocale())}
+                    </TableCell>
                     <TableCell>
                       <div className="flex min-w-0 flex-col gap-1.5">
                         <ArchiveStateBadge state={archive.state} />

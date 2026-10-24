@@ -156,14 +156,23 @@ export default function LogsPage() {
     }
   }
 
+  const displayLines = React.useMemo(
+    () =>
+      lines.map((line) => {
+        const sample = MOCK ? MOCK_LOGS.find((item) => item.seq === line.seq && item.text === line.text) : undefined;
+        return sample ? { ...line, text: t(`demo.${sample.seq}`) } : line;
+      }),
+    [lines, t],
+  );
+
   const filtered = React.useMemo(() => {
     const needle = q.trim().toLowerCase();
-    return lines.filter(
+    return displayLines.filter(
       (l) =>
         (level === "all" || l.level === level) &&
         (!needle || l.text.toLowerCase().includes(needle) || l.tag.toLowerCase().includes(needle)),
     );
-  }, [lines, q, level]);
+  }, [displayLines, q, level]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: filtered changes intentionally re-run the auto-scroll to the newest line.
   React.useEffect(() => {

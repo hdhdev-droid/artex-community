@@ -195,14 +195,18 @@ func trCfg(ko string) string {
 	return ko
 }
 
-// T translates an operator-facing console log template to the configured default
-// language (Language()). Exposed for cmd and server log.Printf call sites. Format
+// T translates an operator-facing console log template to the active runtime
+// language, falling back to Language() before runtime initialization. Format
 // verbs are preserved in order, so wrap the template only: log.Printf(config.T(ko), args...).
 func T(ko string) string {
+	lang := Language()
+	if CurrentLanguage != nil {
+		lang = ActiveLanguage()
+	}
 	if m, ok := logCatalog[ko]; ok {
-		if v, ok2 := m[Language()]; ok2 && v != "" {
+		if v, ok2 := m[lang]; ok2 && v != "" {
 			return v
 		}
 	}
-	return ko
+	return followupText(ko, lang)
 }

@@ -1,6 +1,9 @@
 package server
 
-import "github.com/Autumn-27/artex/config"
+import (
+	"github.com/Autumn-27/artex/config"
+	"strings"
+)
 
 // 사용자 대면 백엔드 메시지(한국어 원문)를 활성 출력 언어로 치환하는 카탈로그. 이 저장소의
 // writeErr 응답 문구·일부 writeJSON 에러 필드는 한국어 상수·리터럴로 작성되어 있다(F3b/F34).
@@ -20,6 +23,13 @@ func trMsg(ko string) string {
 	if m, ok := errCatalog[ko]; ok {
 		if v, ok2 := m[config.ActiveLanguage()]; ok2 && v != "" {
 			return v
+		}
+	}
+	// Wrapped validation errors carry a stable sentinel prefix and a formatted
+	// detail. Translate only a known prefix, preserving unknown external details.
+	if prefix, detail, ok := strings.Cut(ko, ": "); ok {
+		if _, known := errCatalog[prefix]; known {
+			return trMsg(prefix) + ": " + trMsg(detail)
 		}
 	}
 	return ko

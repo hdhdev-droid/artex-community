@@ -18,7 +18,9 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { useAgentLabels } from "@/lib/agent-i18n";
 import { api } from "@/lib/api";
+import { useBuiltinDescriptions } from "@/lib/builtin-description-i18n";
 import type { Agent, Tool } from "@/lib/types";
 
 // Traffic tools are host tools gated by the global 流量捕获 switch: bindable, but
@@ -141,7 +143,9 @@ function ToolEditor({
   onClose: () => void;
 }) {
   const t = useTranslations("toolsPage");
+  const descriptions = useBuiltinDescriptions();
   // traffic tools can't be bound/enabled until the global 流量捕获 switch is on.
+  const agentLabels = useAgentLabels();
   const trafficGated = TRAFFIC_TOOL_KEYS.has(tool.key) && !captureOn;
   const [description, setDescription] = React.useState(tool.description);
   const [bound, setBound] = React.useState<string[]>(tool.agents);
@@ -202,7 +206,7 @@ function ToolEditor({
                     disabled={trafficGated}
                     onCheckedChange={() => toggleAgent(ag.key)}
                   />
-                  {ag.name}
+                  {agentLabels.name(ag)}
                   <span className="text-muted-foreground font-mono text-xs">{ag.key}</span>
                 </label>
               ))}
@@ -220,6 +224,11 @@ function ToolEditor({
         {/* description */}
         <div className="grid gap-1.5">
           <Label className="text-muted-foreground text-xs">{t("descLabel")}</Label>
+          {descriptions.tool(tool.key, description, tool.system) !== description && (
+            <p className="text-muted-foreground text-xs">
+              {t("labels.displaySummary")}: {descriptions.tool(tool.key, description, tool.system)}
+            </p>
+          )}
           <Textarea
             className="font-mono text-xs"
             rows={6}
@@ -255,6 +264,11 @@ function ToolEditor({
               <div className="grid gap-2">
                 <div className="grid gap-1">
                   <Label className="text-muted-foreground text-[11px]">{t("rowDesc")}</Label>
+                  {descriptions.parameter(r.description, tool.system) !== r.description && (
+                    <p className="text-muted-foreground text-xs">
+                      {t("labels.displaySummary")}: {descriptions.parameter(r.description, tool.system)}
+                    </p>
+                  )}
                   <Input
                     className="text-xs"
                     value={r.description}
@@ -293,6 +307,7 @@ function ToolEditor({
 // ToolGridCard is one clickable tile in the catalog grid.
 function ToolGridCard({ tool, onClick }: { tool: Tool; onClick: () => void }) {
   const t = useTranslations("toolsPage");
+  const descriptions = useBuiltinDescriptions();
   return (
     <button
       type="button"
@@ -328,7 +343,9 @@ function ToolGridCard({ tool, onClick }: { tool: Tool; onClick: () => void }) {
           {t("callsBadge", { count: tool.calls ?? 0 })}
         </Badge>
       </div>
-      <p className="text-muted-foreground line-clamp-1 h-4 text-xs">{tool.description || t("noDescription")}</p>
+      <p className="text-muted-foreground line-clamp-1 h-4 text-xs">
+        {descriptions.tool(tool.key, tool.description, tool.system) || t("noDescription")}
+      </p>
       <div className="mt-auto flex flex-wrap gap-1 pt-1">
         {tool.agents.length === 0 && <span className="text-muted-foreground text-[10px]">{t("noBoundAgents")}</span>}
         {tool.agents.map((a) => (
@@ -343,6 +360,7 @@ function ToolGridCard({ tool, onClick }: { tool: Tool; onClick: () => void }) {
 
 export default function ToolsPage() {
   const t = useTranslations("toolsPage");
+  const descriptions = useBuiltinDescriptions();
   const [tools, setTools] = React.useState<Tool[]>([]);
   const [agents, setAgents] = React.useState<Agent[]>([]);
   const [captureOn, setCaptureOn] = React.useState(false);
@@ -381,10 +399,11 @@ export default function ToolsPage() {
       return (
         t.key.toLowerCase().includes(q) ||
         t.description.toLowerCase().includes(q) ||
+        descriptions.tool(t.key, t.description, t.system).toLowerCase().includes(q) ||
         t.agents.some((a) => a.toLowerCase().includes(q))
       );
     },
-    [query],
+    [query, descriptions.tool],
   );
   const systemTools = tools.filter((t) => t.system && matchTool(t));
   const customTools = tools.filter((t) => !t.system && matchTool(t));
@@ -537,6 +556,7 @@ function CustomToolDialog({
   onSaved: () => void;
 }) {
   const t = useTranslations("toolsPage");
+  const agentLabels = useAgentLabels();
   const isNew = edit === "new";
   const tool = edit && edit !== "new" ? edit : null;
   const [key, setKey] = React.useState("");
@@ -744,7 +764,7 @@ function CustomToolDialog({
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4">
           <div className="grid gap-1.5">
-            <Label className="text-xs">Key</Label>
+            <Label className="text-xs">{t("labels.key")}</Label>
             <Input
               className="font-mono"
               placeholder={t("keyPlaceholder")}
@@ -801,7 +821,7 @@ function CustomToolDialog({
             <div className="grid gap-2">
               <div className="flex gap-2">
                 <div className="grid gap-1.5">
-                  <Label className="text-xs">Method</Label>
+                  <Label className="text-xs">{t("labels.method")}</Label>
                   <Input
                     className="w-24"
                     value={ex.method}
@@ -892,7 +912,7 @@ function CustomToolDialog({
               {agents.map((a) => (
                 <label key={a.key} className="flex items-center gap-2 text-sm">
                   <Checkbox checked={bound.includes(a.key)} onCheckedChange={() => toggleAgent(a.key)} />
-                  {a.name}
+                  {agentLabels.name(a)}
                   <span className="text-muted-foreground font-mono text-xs">{a.key}</span>
                 </label>
               ))}

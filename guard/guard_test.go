@@ -3,8 +3,10 @@ package guard
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 
+	"github.com/Autumn-27/artex/config"
 	"github.com/Autumn-27/norma/hook"
 )
 
@@ -36,18 +38,39 @@ func TestPreToolUsePassthrough(t *testing.T) {
 	}
 }
 
-// TestSystemBlockMessagePreservedIsBrainInput pins the platform-governance framing
-// (systemBlockMessage) to its original Chinese bytes. That framing is the model-facing
-// tool_result that steers the pentest agent away from bypassing an intercept block
-// (see guard.go doc comment + the F14 보존 판단). For the ask-block paths the same
-// framed string also lands in the /api/audit record via g.record, so one string serves
-// both the agent input and the audit display — it must NOT be translated, or benchmarked
-// agent behavior could drift. This test fails if the framing is accidentally localized.
-func TestSystemBlockMessagePreservedIsBrainInput(t *testing.T) {
+// Chinese retains the original framing; other languages retain its policy
+// meaning while the reason remains a verbatim format argument.
+func TestSystemBlockMessageChinese(t *testing.T) {
+	previous := config.CurrentLanguage
+	config.CurrentLanguage = func() string { return "zh" }
+	t.Cleanup(func() { config.CurrentLanguage = previous })
 	got := systemBlockMessage("<原因>")
 	want := "【ARTEX 平台管控·非目标防御】此调用被平台拦截。原因：<原因>。此操作被禁止。"
 	if got != want {
-		t.Errorf("systemBlockMessage framing drifted (F14 두뇌 보존 — 원문 유지해야 함):\n got %q\nwant %q", got, want)
+		t.Errorf("Chinese framing changed:\n got %q\nwant %q", got, want)
+	}
+}
+
+func TestSystemBlockMessagePreservesCustomReason(t *testing.T) {
+	previous := config.CurrentLanguage
+	config.CurrentLanguage = func() string { return "en" }
+	t.Cleanup(func() { config.CurrentLanguage = previous })
+	reason := "사용자 원문: %s {payload}"
+	got := systemBlockMessage(reason)
+	if !strings.Contains(got, reason) || !strings.Contains(got, "not target defense") ||
+		!strings.Contains(got, "operation is prohibited") {
+		t.Fatalf("policy framing or original reason lost: %q", got)
+	}
+	name := "[内置] 删除系统关键目录"
+	if got := defaultRuleMessage(name, reason); got != reason {
+		t.Fatalf("edited rule message changed: %q", got)
+	}
+	original := defaultRuleMessages[name]
+	if got := defaultRuleMessage("custom", original); got != original {
+		t.Fatalf("custom rule was localized: %q", got)
+	}
+	if got := defaultRuleMessage(name, original); got == original {
+		t.Fatal("unchanged shipped rule was not localized")
 	}
 }
 

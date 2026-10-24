@@ -275,6 +275,9 @@ WHERE archive.id=$1 FOR UPDATE OF archive,task`, archiveID).Scan(&taskID, &expID
 	if err := restoreFindingTrafficTx(tx, snapshot); err != nil {
 		return nil, fmt.Errorf("restore finding traffic: %w", err)
 	}
+	if err := restoreFindingDefenseTx(tx, snapshot); err != nil {
+		return nil, fmt.Errorf("restore finding defense: %w", err)
+	}
 	if streamedLLMRecords != "" {
 		count, err := insertArchiveJSONSequenceRows(tx, "llm_records", llmRecords)
 		if err != nil {
@@ -389,6 +392,9 @@ func insertArchiveRows(tx *sql.Tx, table string, raw json.RawMessage) error {
 		"task_constraints": true, "activity": true, "task_asset_links": true, "findings": true,
 		"llm_records": true, "llm_usage": true, "skill_usage": true, "tool_usage": true,
 		"side_question_sessions": true, "side_question_requests": true,
+		"finding_defense_plans": true, "finding_defense_validations": true, "finding_defense_replays": true, "finding_defense_executions": true, "finding_defense_assessments": true,
+		"finding_investigations":     true,
+		"finding_investigation_runs": true,
 	}
 	if !allowed[table] {
 		return fmt.Errorf("archive restore table %q is not allowed", table)
@@ -398,6 +404,70 @@ func insertArchiveRows(tx *sql.Tx, table string, raw json.RawMessage) error {
 	}
 	_, err := tx.Exec(`INSERT INTO `+table+` SELECT * FROM json_populate_recordset(NULL::`+table+`,$1::json)`, string(raw))
 	return err
+}
+
+// Defense tables are optional in older packages. Preserve historical snapshots
+// verbatim, including source fingerprints: a remapped source asset should make
+// an old observation stale rather than silently rewrite what was observed.
+func restoreFindingDefenseTx(tx *sql.Tx, snapshot *TaskArchiveSnapshot) error {
+	for _, table := range []string{"finding_defense_plans", "finding_defense_validations", "finding_defense_replays", "finding_defense_executions", "finding_defense_assessments", "finding_investigations", "finding_investigation_runs"} {
+		raw := snapshot.Tables[table]
+		rows, err := decodeArchiveRows(raw)
+		if err != nil {
+			return fmt.Errorf("%s: %w", table, err)
+		}
+		for _, row := range rows {
+			if table == "finding_investigation_runs" {
+				status, _ := row["status"].(string)
+				if !investigationRunTerminal(status) {
+					return errors.New("archived investigation run is not terminal")
+				}
+			}
+			findingID, ok := jsonInt64(row["finding_id"])
+			if !ok || findingID <= 0 {
+				return fmt.Errorf("invalid archived defense finding id in %s", table)
+			}
+			var owned bool
+			if err := tx.QueryRow(`SELECT EXISTS(SELECT 1 FROM findings WHERE id=$1 AND task_id=$2)`, findingID, snapshot.TaskID).Scan(&owned); err != nil {
+				return err
+			}
+			if !owned {
+				return fmt.Errorf("defense record references finding outside archived task: %d", findingID)
+			}
+		}
+		if (table == "finding_defense_executions" || table == "finding_defense_assessments") && len(rows) > 0 {
+			for _, row := range rows {
+				if table == "finding_defense_executions" && row["diagnosis_snapshot"] == nil {
+					row["diagnosis_snapshot"] = map[string]any{}
+				}
+				if table == "finding_defense_executions" && row["source_kind"] == nil {
+					row["source_kind"] = "splunk"
+				}
+				if table == "finding_defense_assessments" && row["diagnostics"] == nil {
+					row["diagnostics"] = []any{}
+				}
+			}
+			raw, err = json.Marshal(rows)
+			if err != nil {
+				return err
+			}
+		}
+		if err := insertArchiveRows(tx, table, raw); err != nil {
+			return err
+		}
+	}
+	if rawRowCount(snapshot.Tables["finding_defense_executions"]) > 0 {
+		var invalid bool
+		if err := tx.QueryRow(`SELECT EXISTS(SELECT 1 FROM finding_defense_executions e JOIN findings f ON f.id=e.finding_id
+		LEFT JOIN finding_defense_executions b ON b.id=e.baseline_id AND b.finding_id=e.finding_id
+		WHERE f.task_id=$1 AND e.baseline_id IS NOT NULL AND (b.id IS NULL OR b.id>=e.id))`, snapshot.TaskID).Scan(&invalid); err != nil {
+			return err
+		}
+		if invalid {
+			return errors.New("archived defense baseline belongs to another finding or is not an earlier execution")
+		}
+	}
+	return nil
 }
 
 func insertArchiveJSONSequenceRows(tx *sql.Tx, table string, reader io.Reader) (int64, error) {

@@ -1,6 +1,6 @@
 <div align="center">
 
-# ARTEX — Global Edition
+# ARTEX — Community Edition
 
 **An autonomous penetration-testing system driven by LLM multi-agents** (Go backend + Next.js frontend)
 
@@ -11,6 +11,14 @@ English · [한국어](README.ko.md) · [中文](README.zh.md) · [Español](REA
 [![ci](https://github.com/jiwoochris/artex-global/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jiwoochris/artex-global/actions/workflows/ci.yml) [![detections](https://github.com/jiwoochris/artex-global/actions/workflows/detections.yml/badge.svg?branch=main)](https://github.com/jiwoochris/artex-global/actions/workflows/detections.yml) [![web](https://github.com/jiwoochris/artex-global/actions/workflows/web.yml/badge.svg?branch=main)](https://github.com/jiwoochris/artex-global/actions/workflows/web.yml) [![license: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 
 </div>
+
+See the [local Docker development guide (Korean)](docs/local-development.md) for the isolated frontend, backend, PostgreSQL, and assessment runner stack.
+
+## Fork origin and upstream updates
+
+`artex-community` is a fork of [jiwoochris/artex-global](https://github.com/jiwoochris/artex-global). The project lineage is `Autumn-27/ARTEX → jiwoochris/artex-global → hdhdev-droid/artex-community`.
+
+Track improvements, security fixes, and new versions from `artex-global`, and integrate applicable changes while preserving community-specific work. The upstream baseline and update procedure are recorded in [MAINTAINING.md](MAINTAINING.md#community-upstream). References to global-edition releases, images, and CI below are inherited upstream information, not evidence of a community release or build.
 
 ---
 
@@ -90,7 +98,7 @@ The original (Chinese UI) screens are available in [`README.zh.md`](README.zh.md
 
 > **Prerequisites:** Docker and Docker Compose. The database is **PostgreSQL**, brought up by compose. Exploration requires an **LLM** (`ANTHROPIC_API_KEY` or `OPENAI_API_KEY`; can also be set in the UI).
 
-> **Image:** the `artex` service in `docker-compose.yml` pulls `ghcr.io/jiwoochris/artex-global`, the global-edition image this repository publishes to GitHub Container Registry on every release tag (`v*`). The default tag is `latest` (the most recent release); set `ARTEX_TAG` in `.env` to pin a specific release. Upstream's original image `autumn27/artex` has been taken down from Docker Hub and is no longer used.
+> **Image:** the `artex` service in `docker-compose.yml` pulls `ghcr.io/hdhdev-droid/artex-community`, the community image this repository publishes to GitHub Container Registry on every release tag (`v*`). The default tag is `latest` (the most recent release); set `ARTEX_TAG` in `.env` to pin a specific release. Upstream's original image `autumn27/artex` has been taken down from Docker Hub and is no longer used.
 
 ```bash
 git clone https://github.com/jiwoochris/artex-global.git
@@ -107,7 +115,7 @@ The image bundles common tools (ripgrep, curl, vim, npm, nmap, and more), and wh
 
 Upstream provides several methods: an install script (`./install.sh`), precompiled binaries (Releases), and a single-binary build from source. The commands and full procedure are collected in the "安装" (Installation) section of [`README.zh.md`](README.zh.md#安装) (in Chinese); the essentials are reproduced below.
 
-- **Install script:** running `./install.sh` detects/installs Docker and then lets you choose "① all-in-Docker" or "② local compile and run." "① all-in-Docker" pulls and starts the same image as the quick start above (`ghcr.io/jiwoochris/artex-global`), while "② local compile and run" builds it yourself the same way as the **single-binary build from source** below.
+- **Install script:** running `./install.sh` detects/installs Docker and then lets you choose "① all-in-Docker" or "② local compile and run." "① all-in-Docker" pulls and starts the same image as the quick start above (`ghcr.io/hdhdev-droid/artex-community`), while "② local compile and run" builds it yourself the same way as the **single-binary build from source** below.
 - **Single-binary build from source:**
 
   ```bash

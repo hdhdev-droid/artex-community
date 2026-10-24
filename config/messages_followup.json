@@ -1,0 +1,522 @@
+[
+  [
+    "[custom-tool] 加载失败: %v",
+    "[custom-tool] 불러오기 실패: %v",
+    "[custom-tool] load failed: %v",
+    "[custom-tool] 加载失败: %v",
+    "[custom-tool] error al cargar: %v",
+    "[custom-tool] 読み込み失敗: %v"
+  ],
+  [
+    "[tools] goal_met 解绑 planner 失败: %v",
+    "[tools] planner에서 goal_met 연결 해제 실패: %v",
+    "[tools] failed to unbind goal_met from planner: %v",
+    "[tools] goal_met 解绑 planner 失败: %v",
+    "[tools] no se pudo desvincular goal_met de planner: %v",
+    "[tools] plannerからgoal_metの解除に失敗: %v"
+  ],
+  [
+    "[reporter] 读取触发器失败: %v",
+    "[reporter] 트리거 읽기 실패: %v",
+    "[reporter] failed to read triggers: %v",
+    "[reporter] 读取触发器失败: %v",
+    "[reporter] error al leer los activadores: %v",
+    "[reporter] トリガーの読み取り失敗: %v"
+  ],
+  [
+    "[reporter] 升级触发消息失败: %v",
+    "[reporter] 트리거 메시지 갱신 실패: %v",
+    "[reporter] failed to update trigger message: %v",
+    "[reporter] 升级触发消息失败: %v",
+    "[reporter] error al actualizar el mensaje del activador: %v",
+    "[reporter] トリガーメッセージの更新失敗: %v"
+  ],
+  [
+    "[reporter] 触发消息已升级为读取并回传 evidence_version",
+    "[reporter] evidence_version을 읽고 반환하도록 트리거 메시지 갱신",
+    "[reporter] trigger message updated to read and return evidence_version",
+    "[reporter] 触发消息已升级为读取并回传 evidence_version",
+    "[reporter] mensaje actualizado para leer y devolver evidence_version",
+    "[reporter] evidence_versionを読み取り返すようトリガーメッセージを更新"
+  ],
+  [
+    "[reporter] 创建 agent 失败: %v",
+    "[reporter] 에이전트 생성 실패: %v",
+    "[reporter] failed to create agent: %v",
+    "[reporter] 创建 agent 失败: %v",
+    "[reporter] error al crear el agente: %v",
+    "[reporter] エージェントの作成失敗: %v"
+  ],
+  [
+    "[reporter] seed prompt 失败: %v",
+    "[reporter] 기본 프롬프트 등록 실패: %v",
+    "[reporter] failed to seed prompt: %v",
+    "[reporter] seed prompt 失败: %v",
+    "[reporter] error al registrar el prompt inicial: %v",
+    "[reporter] 初期プロンプトの登録失敗: %v"
+  ],
+  [
+    "[reporter] 设置触发运行策略失败: %v",
+    "[reporter] 트리거 실행 정책 설정 실패: %v",
+    "[reporter] failed to set trigger execution policy: %v",
+    "[reporter] 设置触发运行策略失败: %v",
+    "[reporter] error al configurar la política de ejecución del activador: %v",
+    "[reporter] トリガー実行ポリシーの設定失敗: %v"
+  ],
+  [
+    "[reporter] 绑定工具失败: %v",
+    "[reporter] 도구 연결 실패: %v",
+    "[reporter] failed to bind tools: %v",
+    "[reporter] 绑定工具失败: %v",
+    "[reporter] error al vincular herramientas: %v",
+    "[reporter] ツールの関連付け失敗: %v"
+  ],
+  [
+    "[reporter] 创建触发器失败: %v",
+    "[reporter] 트리거 생성 실패: %v",
+    "[reporter] failed to create trigger: %v",
+    "[reporter] 创建触发器失败: %v",
+    "[reporter] error al crear el activador: %v",
+    "[reporter] トリガーの作成失敗: %v"
+  ],
+  [
+    "[worker] add_company_scope 解绑失败: %v",
+    "[worker] add_company_scope 연결 해제 실패: %v",
+    "[worker] failed to unbind add_company_scope: %v",
+    "[worker] add_company_scope 解绑失败: %v",
+    "[worker] error al desvincular add_company_scope: %v",
+    "[worker] add_company_scopeの解除失敗: %v"
+  ],
+  [
+    "[worker] %s 从 worker 解绑失败: %v",
+    "[worker] %s 도구의 worker 연결 해제 실패: %v",
+    "[worker] failed to unbind %s from worker: %v",
+    "[worker] %s 从 worker 解绑失败: %v",
+    "[worker] error al desvincular %s de worker: %v",
+    "[worker] %sのworkerからの解除失敗: %v"
+  ],
+  [
+    "[worker] 回看/详情工具补绑失败: %v",
+    "[worker] 이력·상세 도구 재연결 실패: %v",
+    "[worker] failed to restore history/detail tool bindings: %v",
+    "[worker] 回看/详情工具补绑失败: %v",
+    "[worker] error al restaurar vínculos de herramientas de historial/detalle: %v",
+    "[worker] 履歴・詳細ツールの再関連付け失敗: %v"
+  ],
+  [
+    "[auto] 默认绑定失败: %v",
+    "[auto] 기본 연결 실패: %v",
+    "[auto] default binding failed: %v",
+    "[auto] 默认绑定失败: %v",
+    "[auto] error en la vinculación predeterminada: %v",
+    "[auto] 既定の関連付け失敗: %v"
+  ],
+  [
+    "[engine] task %s 重置 %d 个残留 running 意图为 open",
+    "[engine] 작업 %s의 잔여 running 의도 %d개를 open으로 변경",
+    "[engine] task %s: reset %d stale running intents to open",
+    "[engine] task %s 重置 %d 个残留 running 意图为 open",
+    "[engine] tarea %s: se restablecieron %d intenciones running pendientes a open",
+    "[engine] タスク%s: 残存するrunningの意図%d件をopenに変更"
+  ],
+  [
+    "[task] #%s 意图 #%d 已重开(重跑)",
+    "[task] #%s 의도 #%d 다시 열림(재실행)",
+    "[task] #%s intent #%d reopened (rerun)",
+    "[task] #%s 意图 #%d 已重开(重跑)",
+    "[task] #%s intención #%d reabierta (repetición)",
+    "[task] #%s 意図#%dを再開（再実行）"
+  ],
+  [
+    "[task] #%s 批量重开 %d 条 blocked 意图",
+    "[task] #%s 차단된 의도 %d개 다시 열림",
+    "[task] #%s reopened %d blocked intents",
+    "[task] #%s 批量重开 %d 条 blocked 意图",
+    "[task] #%s reabiertas %d intenciones bloqueadas",
+    "[task] #%s ブロックされた意図%d件を再開"
+  ],
+  [
+    "[task] 新建任务 #%s «%s» 目标: %s",
+    "[task] 새 작업 #%s «%s» 목표: %s",
+    "[task] created task #%s «%s» goal: %s",
+    "[task] 新建任务 #%s «%s» 目标: %s",
+    "[task] tarea creada #%s «%s» objetivo: %s",
+    "[task] 新規タスク#%s «%s» 目標: %s"
+  ],
+  [
+    "[seed] task %s: 未能从 %q 解析出目标 host/IP，不创建站点（请手动配置 scope）",
+    "[seed] 작업 %s: %q에서 대상 host/IP를 해석하지 못해 사이트를 생성하지 않음(범위 수동 설정 필요)",
+    "[seed] task %s: cannot parse target host/IP from %q; site not created (configure scope manually)",
+    "[seed] task %s: 未能从 %q 解析出目标 host/IP，不创建站点（请手动配置 scope）",
+    "[seed] tarea %s: no se pudo obtener host/IP de %q; sitio no creado (configure el alcance manualmente)",
+    "[seed] タスク%s: %qから対象host/IPを解析できずサイト未作成（範囲を手動設定してください）"
+  ],
+  [
+    "[seed] task %s: 目标 %q 是 LLM 网关，拒绝作为渗透目标",
+    "[seed] 작업 %s: 대상 %q는 LLM 게이트웨이이므로 진단 대상에서 제외",
+    "[seed] task %s: target %q is an LLM gateway; rejected as an assessment target",
+    "[seed] task %s: 目标 %q 是 LLM 网关，拒绝作为渗透目标",
+    "[seed] tarea %s: el destino %q es una pasarela LLM; se rechaza como objetivo de evaluación",
+    "[seed] タスク%s: 対象%qはLLMゲートウェイのため診断対象として拒否"
+  ],
+  [
+    "[seed] task %s: 目标站点 %s",
+    "[seed] 작업 %s: 대상 사이트 %s",
+    "[seed] task %s: target site %s",
+    "[seed] task %s: 目标站点 %s",
+    "[seed] tarea %s: sitio de destino %s",
+    "[seed] タスク%s: 対象サイト%s"
+  ],
+  [
+    "[seed] task %s: 下发种子意图失败: %v",
+    "[seed] 작업 %s: 초기 의도 등록 실패: %v",
+    "[seed] task %s: failed to create initial intent: %v",
+    "[seed] task %s: 下发种子意图失败: %v",
+    "[seed] tarea %s: error al crear la intención inicial: %v",
+    "[seed] タスク%s: 初期意図の登録失敗: %v"
+  ],
+  [
+    "[seed] task %s: 已下发种子意图 #%d",
+    "[seed] 작업 %s: 초기 의도 #%d 등록",
+    "[seed] task %s: created initial intent #%d",
+    "[seed] task %s: 已下发种子意图 #%d",
+    "[seed] tarea %s: intención inicial #%d creada",
+    "[seed] タスク%s: 初期意図#%dを登録"
+  ],
+  [
+    "[notify] 状态变更事件未登记 finding=%d %s→%s（状态已更新）",
+    "[notify] 상태 변경 이벤트 등록 실패 finding=%d %s→%s(상태는 갱신됨)",
+    "[notify] status event not registered finding=%d %s→%s (status updated)",
+    "[notify] 状态变更事件未登记 finding=%d %s→%s（状态已更新）",
+    "[notify] evento de estado no registrado finding=%d %s→%s (estado actualizado)",
+    "[notify] 状態イベント未登録 finding=%d %s→%s（状態は更新済み）"
+  ],
+  [
+    "[traffic] 下载 blob %s 中断：%v",
+    "[traffic] blob %s 다운로드 중단: %v",
+    "[traffic] blob %s download interrupted: %v",
+    "[traffic] 下载 blob %s 中断：%v",
+    "[traffic] descarga del blob %s interrumpida: %v",
+    "[traffic] blob %sのダウンロード中断: %v"
+  ],
+  [
+    "[mcp] %s 连接失败: %v",
+    "[mcp] %s 연결 실패: %v",
+    "[mcp] %s connection failed: %v",
+    "[mcp] %s 连接失败: %v",
+    "[mcp] error de conexión con %s: %v",
+    "[mcp] %sへの接続失敗: %v"
+  ],
+  [
+    "[mcp] %s tools/list 失败: %v",
+    "[mcp] %s tools/list 실패: %v",
+    "[mcp] %s tools/list failed: %v",
+    "[mcp] %s tools/list 失败: %v",
+    "[mcp] error en tools/list de %s: %v",
+    "[mcp] %s tools/list失敗: %v"
+  ],
+  [
+    "[prompts] seed %s 跳过: agent 不存在 (%v)",
+    "[prompts] 기본 프롬프트 %s 건너뜀: 에이전트 없음(%v)",
+    "[prompts] seed %s skipped: agent does not exist (%v)",
+    "[prompts] seed %s 跳过: agent 不存在 (%v)",
+    "[prompts] registro inicial %s omitido: agente inexistente (%v)",
+    "[prompts] 初期登録%sをスキップ: エージェントなし（%v）"
+  ],
+  [
+    "[prompts] seed %s 失败: %v",
+    "[prompts] 기본 프롬프트 %s 등록 실패: %v",
+    "[prompts] seed %s failed: %v",
+    "[prompts] seed %s 失败: %v",
+    "[prompts] error en el registro inicial %s: %v",
+    "[prompts] 初期プロンプト%sの登録失敗: %v"
+  ],
+  [
+    "[tools] seed %s 失败: %v",
+    "[tools] 기본 도구 %s 등록 실패: %v",
+    "[tools] seed %s failed: %v",
+    "[tools] seed %s 失败: %v",
+    "[tools] error en el registro inicial %s: %v",
+    "[tools] 初期ツール%sの登録失敗: %v"
+  ],
+  [
+    "[tools] 读取工具表失败，按代码默认放行: %v",
+    "[tools] 도구 목록 읽기 실패, 코드 기본값 적용: %v",
+    "[tools] failed to read tool catalog; using code defaults: %v",
+    "[tools] 读取工具表失败，按代码默认放行: %v",
+    "[tools] error al leer el catálogo; se usan los valores del código: %v",
+    "[tools] ツール一覧の読み取り失敗、コード既定値を使用: %v"
+  ],
+  [
+    "[prompts] goals 提示词重刷为新默认失败: %v",
+    "[prompts] goals 기본 프롬프트 갱신 실패: %v",
+    "[prompts] goals default prompt refresh failed: %v",
+    "[prompts] goals 提示词重刷为新默认失败: %v",
+    "[prompts] error al actualizar el prompt predeterminado de goals: %v",
+    "[prompts] goalsの既定プロンプト更新失敗: %v"
+  ],
+  [
+    "[prompts] mainagent 提示词重刷为新默认失败: %v",
+    "[prompts] mainagent 기본 프롬프트 갱신 실패: %v",
+    "[prompts] mainagent default prompt refresh failed: %v",
+    "[prompts] mainagent 提示词重刷为新默认失败: %v",
+    "[prompts] error al actualizar el prompt predeterminado de mainagent: %v",
+    "[prompts] mainagentの既定プロンプト更新失敗: %v"
+  ],
+  [
+    "[prompts] planner 提示词重刷为新默认失败: %v",
+    "[prompts] planner 기본 프롬프트 갱신 실패: %v",
+    "[prompts] planner default prompt refresh failed: %v",
+    "[prompts] planner 提示词重刷为新默认失败: %v",
+    "[prompts] error al actualizar el prompt predeterminado de planner: %v",
+    "[prompts] plannerの既定プロンプト更新失敗: %v"
+  ],
+  [
+    "[prompts] worker 提示词重刷为新默认失败: %v",
+    "[prompts] worker 기본 프롬프트 갱신 실패: %v",
+    "[prompts] worker default prompt refresh failed: %v",
+    "[prompts] worker 提示词重刷为新默认失败: %v",
+    "[prompts] error al actualizar el prompt predeterminado de worker: %v",
+    "[prompts] workerの既定プロンプト更新失敗: %v"
+  ],
+  [
+    "[prompts] goals 提示词已追加新默认版本(加入抽操作约束步,一次性)",
+    "[prompts] goals 기본 프롬프트 버전 추가(일회성; 작업 제약 추출 단계 추가)",
+    "[prompts] goals default prompt version appended (once; added extraction of operational constraints)",
+    "[prompts] goals 提示词已追加新默认版本(加入抽操作约束步,一次性)",
+    "[prompts] versión predeterminada de goals añadida (una vez; añadida extracción de restricciones operativas)",
+    "[prompts] goalsの既定プロンプト版を追加（一度のみ; 操作制約の抽出を追加）"
+  ],
+  [
+    "[prompts] mainagent 提示词已追加新默认版本(加入目标达成后反问建目标,一次性)",
+    "[prompts] mainagent 기본 프롬프트 버전 추가(일회성; 목표 달성 후 새 목표 확인 추가)",
+    "[prompts] mainagent default prompt version appended (once; added confirmation of a new goal after completion)",
+    "[prompts] mainagent 提示词已追加新默认版本(加入目标达成后反问建目标,一次性)",
+    "[prompts] versión predeterminada de mainagent añadida (una vez; añadida confirmación de un nuevo objetivo al completar)",
+    "[prompts] mainagentの既定プロンプト版を追加（一度のみ; 達成後の新しい目標確認を追加）"
+  ],
+  [
+    "[prompts] planner 提示词已追加新默认版本(精简重构+克制降级去重+深度优先+否定复核上界,一次性)",
+    "[prompts] planner 기본 프롬프트 버전 추가(일회성; 구조 간소화, 중복·불필요한 하향 조정 제한, 깊이 우선, 부정 결과 재검토 상한)",
+    "[prompts] planner default prompt version appended (once; simplified structure, bounded downgrades/deduplication, depth first, bounded negative-result review)",
+    "[prompts] planner 提示词已追加新默认版本(精简重构+克制降级去重+深度优先+否定复核上界,一次性)",
+    "[prompts] versión predeterminada de planner añadida (una vez; estructura simplificada, degradación y duplicados limitados, profundidad primero y revisión negativa limitada)",
+    "[prompts] plannerの既定プロンプト版を追加（一度のみ; 構造簡素化、降格・重複の抑制、深さ優先、否定結果の再確認上限）"
+  ],
+  [
+    "[prompts] worker 提示词已追加新默认版本(查上下文段收敛为 list_assets/list_findings,去掉 list_facts/node_detail/asset_neighbors,一次性)",
+    "[prompts] worker 기본 프롬프트 버전 추가(일회성; 문맥 조회를 list_assets/list_findings로 통합; list_facts/node_detail/asset_neighbors 제거)",
+    "[prompts] worker default prompt version appended (once; context reads use list_assets/list_findings; removed list_facts/node_detail/asset_neighbors)",
+    "[prompts] worker 提示词已追加新默认版本(查上下文段收敛为 list_assets/list_findings,去掉 list_facts/node_detail/asset_neighbors,一次性)",
+    "[prompts] versión predeterminada de worker añadida (una vez; lectura de contexto con list_assets/list_findings; eliminados list_facts/node_detail/asset_neighbors)",
+    "[prompts] workerの既定プロンプト版を追加（一度のみ; 文脈参照をlist_assets/list_findingsに統合、list_facts/node_detail/asset_neighborsを削除）"
+  ],
+  [
+    "[auto] report_finding 默认绑定失败: %v",
+    "[auto] report_finding 기본 연결 실패: %v",
+    "[auto] report_finding default binding failed: %v",
+    "[auto] report_finding 默认绑定失败: %v",
+    "[auto] error en la vinculación predeterminada de report_finding: %v",
+    "[auto] report_findingの既定の関連付け失敗: %v"
+  ],
+  [
+    "[planner] report_finding 默认绑定失败: %v",
+    "[planner] report_finding 기본 연결 실패: %v",
+    "[planner] report_finding default binding failed: %v",
+    "[planner] report_finding 默认绑定失败: %v",
+    "[planner] error en la vinculación predeterminada de report_finding: %v",
+    "[planner] report_findingの既定の関連付け失敗: %v"
+  ],
+  [
+    "[planner] list_assets 默认绑定失败: %v",
+    "[planner] list_assets 기본 연결 실패: %v",
+    "[planner] list_assets default binding failed: %v",
+    "[planner] list_assets 默认绑定失败: %v",
+    "[planner] error en la vinculación predeterminada de list_assets: %v",
+    "[planner] list_assetsの既定の関連付け失敗: %v"
+  ],
+  [
+    "[planner] add_company_scope 默认绑定失败: %v",
+    "[planner] add_company_scope 기본 연결 실패: %v",
+    "[planner] add_company_scope default binding failed: %v",
+    "[planner] add_company_scope 默认绑定失败: %v",
+    "[planner] error en la vinculación predeterminada de add_company_scope: %v",
+    "[planner] add_company_scopeの既定の関連付け失敗: %v"
+  ],
+  [
+    "禁止执行递归强制删除（rm -rf / rm --recursive），可能永久损坏系统或靶机环境",
+    "재귀 강제 삭제(rm -rf / rm --recursive)는 시스템이나 진단 환경을 영구 손상시킬 수 있어 금지됩니다",
+    "Recursive forced deletion (rm -rf / rm --recursive) is prohibited because it can permanently damage the system or assessment environment",
+    "禁止执行递归强制删除（rm -rf / rm --recursive），可能永久损坏系统或靶机环境",
+    "La eliminación recursiva forzada (rm -rf / rm --recursive) está prohibida porque puede dañar permanentemente el sistema o el entorno de evaluación",
+    "再帰的な強制削除（rm -rf / rm --recursive）はシステムや診断環境を恒久的に損傷する可能性があるため禁止されています"
+  ],
+  [
+    "禁止删除系统关键路径",
+    "시스템 핵심 경로 삭제는 금지됩니다",
+    "Deleting critical system paths is prohibited",
+    "禁止删除系统关键路径",
+    "Está prohibido eliminar rutas esenciales del sistema",
+    "システムの重要なパスの削除は禁止されています"
+  ],
+  [
+    "禁止格式化磁盘（mkfs）",
+    "디스크 포맷(mkfs)은 금지됩니다",
+    "Formatting disks (mkfs) is prohibited",
+    "禁止格式化磁盘（mkfs）",
+    "Está prohibido formatear discos (mkfs)",
+    "ディスクのフォーマット（mkfs）は禁止されています"
+  ],
+  [
+    "禁止使用 dd 覆写磁盘设备",
+    "dd로 디스크 장치를 덮어쓰는 작업은 금지됩니다",
+    "Overwriting disk devices with dd is prohibited",
+    "禁止使用 dd 覆写磁盘设备",
+    "Está prohibido sobrescribir dispositivos de disco con dd",
+    "ddによるディスクデバイスの上書きは禁止されています"
+  ],
+  [
+    "禁止执行 Fork 炸弹",
+    "포크 폭탄 실행은 금지됩니다",
+    "Fork bombs are prohibited",
+    "禁止执行 Fork 炸弹",
+    "Están prohibidas las bombas fork",
+    "Fork爆弾の実行は禁止されています"
+  ],
+  [
+    "禁止执行关机或重启命令",
+    "종료·재부팅 명령 실행은 금지됩니다",
+    "Shutdown and reboot commands are prohibited",
+    "禁止执行关机或重启命令",
+    "Están prohibidos los comandos de apagado y reinicio",
+    "シャットダウン・再起動コマンドは禁止されています"
+  ],
+  [
+    "禁止 kill -9 -1 或 killall -9（杀死所有进程）",
+    "kill -9 -1 또는 killall -9(전체 프로세스 종료)는 금지됩니다",
+    "kill -9 -1 and killall -9 (killing all processes) are prohibited",
+    "禁止 kill -9 -1 或 killall -9（杀死所有进程）",
+    "Están prohibidos kill -9 -1 y killall -9 (terminar todos los procesos)",
+    "kill -9 -1またはkillall -9（全プロセスの終了）は禁止されています"
+  ],
+  [
+    "禁止对磁盘设备执行 shred/wipe 擦除",
+    "디스크 장치의 shred/wipe 삭제는 금지됩니다",
+    "Erasing disk devices with shred/wipe is prohibited",
+    "禁止对磁盘设备执行 shred/wipe 擦除",
+    "Está prohibido borrar dispositivos de disco con shred/wipe",
+    "shred/wipeによるディスクデバイスの消去は禁止されています"
+  ],
+  [
+    "禁止清空防火墙规则（iptables -F / nft flush）",
+    "방화벽 규칙 초기화(iptables -F / nft flush)는 금지됩니다",
+    "Flushing firewall rules (iptables -F / nft flush) is prohibited",
+    "禁止清空防火墙规则（iptables -F / nft flush）",
+    "Está prohibido vaciar las reglas del cortafuegos (iptables -F / nft flush)",
+    "ファイアウォールルールの消去（iptables -F / nft flush）は禁止されています"
+  ],
+  [
+    "禁止执行 DROP 操作，可能不可逆地销毁数据库对象",
+    "DB 객체를 복구 불가능하게 삭제할 수 있는 DROP 작업은 금지됩니다",
+    "DROP operations are prohibited because they can irreversibly destroy database objects",
+    "禁止执行 DROP 操作，可能不可逆地销毁数据库对象",
+    "Las operaciones DROP están prohibidas porque pueden destruir objetos de la base de datos de forma irreversible",
+    "DBオブジェクトを復元不能に削除する可能性があるDROP操作は禁止されています"
+  ],
+  [
+    "禁止执行 TRUNCATE，可能清空数据表所有数据",
+    "테이블 전체 데이터를 비울 수 있는 TRUNCATE는 금지됩니다",
+    "TRUNCATE is prohibited because it can empty all data in a table",
+    "禁止执行 TRUNCATE，可能清空数据表所有数据",
+    "TRUNCATE está prohibido porque puede vaciar todos los datos de una tabla",
+    "テーブルの全データを消去する可能性があるTRUNCATEは禁止されています"
+  ],
+  [
+    "禁止执行 MongoDB drop 操作",
+    "MongoDB drop 작업은 금지됩니다",
+    "MongoDB drop operations are prohibited",
+    "禁止执行 MongoDB drop 操作",
+    "Están prohibidas las operaciones drop de MongoDB",
+    "MongoDBのdrop操作は禁止されています"
+  ],
+  [
+    "禁止执行 Redis FLUSHALL / FLUSHDB，可能清空全部缓存数据",
+    "전체 캐시를 비울 수 있는 Redis FLUSHALL / FLUSHDB는 금지됩니다",
+    "Redis FLUSHALL / FLUSHDB are prohibited because they can erase all cached data",
+    "禁止执行 Redis FLUSHALL / FLUSHDB，可能清空全部缓存数据",
+    "Redis FLUSHALL / FLUSHDB están prohibidos porque pueden borrar todos los datos en caché",
+    "全キャッシュを消去する可能性があるRedis FLUSHALL / FLUSHDBは禁止されています"
+  ],
+  [
+    "禁止通过 curl/wget 发送 HTTP DELETE 请求，可能删除目标系统数据",
+    "대상 데이터를 삭제할 수 있는 curl/wget HTTP DELETE 요청은 금지됩니다",
+    "HTTP DELETE requests through curl/wget are prohibited because they can delete target data",
+    "禁止通过 curl/wget 发送 HTTP DELETE 请求，可能删除目标系统数据",
+    "Las solicitudes HTTP DELETE mediante curl/wget están prohibidas porque pueden borrar datos del destino",
+    "対象データを削除する可能性があるcurl/wgetによるHTTP DELETEリクエストは禁止されています"
+  ],
+  [
+    "禁止使用 Python HTTP 客户端发送 DELETE 请求",
+    "Python HTTP 클라이언트의 DELETE 요청은 금지됩니다",
+    "DELETE requests through Python HTTP clients are prohibited",
+    "禁止使用 Python HTTP 客户端发送 DELETE 请求",
+    "Están prohibidas las solicitudes DELETE mediante clientes HTTP de Python",
+    "Python HTTPクライアントによるDELETEリクエストは禁止されています"
+  ],
+  [
+    "禁止在脚本中声明并发送 HTTP DELETE 请求",
+    "스크립트에서 HTTP DELETE 요청을 선언·전송하는 작업은 금지됩니다",
+    "Declaring and sending HTTP DELETE requests in scripts is prohibited",
+    "禁止在脚本中声明并发送 HTTP DELETE 请求",
+    "Está prohibido declarar y enviar solicitudes HTTP DELETE en scripts",
+    "スクリプトでのHTTP DELETEリクエストの宣言・送信は禁止されています"
+  ],
+  [
+    "禁止调用批量清空或销毁类接口（/clear /wipe /flush /purge 等）",
+    "일괄 삭제·파기 API(/clear /wipe /flush /purge 등) 호출은 금지됩니다",
+    "Calling bulk-clear or destruction APIs (/clear /wipe /flush /purge, etc.) is prohibited",
+    "禁止调用批量清空或销毁类接口（/clear /wipe /flush /purge 等）",
+    "Está prohibido invocar API de borrado o destrucción masiva (/clear /wipe /flush /purge, etc.)",
+    "一括消去・破棄API（/clear /wipe /flush /purgeなど）の呼び出しは禁止されています"
+  ],
+  [
+    "破坏性命令被拒绝（rm -rf / / mkfs / dd / fork bomb / 关机重启 / 覆写磁盘设备）",
+    "파괴적 명령이 거부되었습니다(rm -rf /, mkfs, dd, 포크 폭탄, 종료·재부팅, 디스크 덮어쓰기)",
+    "Destructive command rejected (rm -rf /, mkfs, dd, fork bomb, shutdown/reboot, disk overwrite)",
+    "破坏性命令被拒绝（rm -rf / / mkfs / dd / fork bomb / 关机重启 / 覆写磁盘设备）",
+    "Comando destructivo rechazado (rm -rf /, mkfs, dd, bomba fork, apagado/reinicio, sobrescritura de disco)",
+    "破壊的コマンドを拒否しました（rm -rf /、mkfs、dd、Fork爆弾、終了・再起動、ディスク上書き）"
+  ],
+  [
+    "疑似数据外泄管道被拒绝（命令输出经 curl/wget/nc 外传）",
+    "데이터 유출 의심 파이프가 거부되었습니다(curl/wget/nc로 명령 출력 전송)",
+    "Suspected exfiltration pipe rejected (command output sent through curl/wget/nc)",
+    "疑似数据外泄管道被拒绝（命令输出经 curl/wget/nc 外传）",
+    "Canal de posible exfiltración rechazado (salida de comandos enviada mediante curl/wget/nc)",
+    "データ流出の疑いがあるパイプを拒否しました（curl/wget/ncでコマンド出力を送信）"
+  ],
+  [
+    "工作已取消，平台安全管控阻止执行",
+    "작업이 취소되어 플랫폼 안전 정책이 실행을 차단했습니다",
+    "Work was canceled; platform safety controls blocked execution",
+    "工作已取消，平台安全管控阻止执行",
+    "El trabajo se canceló; los controles de seguridad de la plataforma bloquearon la ejecución",
+    "作業がキャンセルされたためプラットフォームの安全管理が実行を阻止しました"
+  ],
+  [
+    "人工审批未通过（用户拒绝或审批超时）",
+    "사람의 승인을 받지 못했습니다(사용자 거부 또는 승인 시간 초과)",
+    "Human approval was not granted (user rejection or approval timeout)",
+    "人工审批未通过（用户拒绝或审批超时）",
+    "No se concedió la aprobación humana (rechazo del usuario o tiempo agotado)",
+    "手動承認されませんでした（ユーザーの拒否または承認タイムアウト）"
+  ],
+  [
+    "【ARTEX 平台管控·非目标防御】此调用被平台拦截。原因：%s。此操作被禁止。",
+    "[ARTEX 플랫폼 정책·대상 측 방어 아님] 플랫폼이 이 호출을 차단했습니다. 사유: %s. 이 작업은 금지됩니다.",
+    "[ARTEX platform policy, not target defense] The platform blocked this call. Reason: %s. This operation is prohibited.",
+    "【ARTEX 平台管控·非目标防御】此调用被平台拦截。原因：%s。此操作被禁止。",
+    "[Política de la plataforma ARTEX, no defensa del destino] La plataforma bloqueó esta llamada. Motivo: %s. Esta operación está prohibida.",
+    "[ARTEXプラットフォーム管理・対象側の防御ではありません] プラットフォームがこの呼び出しを阻止しました。理由: %s。この操作は禁止されています。"
+  ]
+]

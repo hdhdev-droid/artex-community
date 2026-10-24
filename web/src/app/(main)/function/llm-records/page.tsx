@@ -121,6 +121,7 @@ const PAGE_SIZES = [25, 50, 100];
 export default function LLMRecordsPage() {
   const t = useTranslations("llmRecords");
   const tp = useTranslations("pagination");
+  const tc = useTranslations("uiControls");
   const [page, setPage] = React.useState(0);
   const [size, setSize] = React.useState(50);
   const [session, setSession] = React.useState("");
@@ -307,7 +308,12 @@ export default function LLMRecordsPage() {
             className="h-8 pl-8"
           />
         </div>
-        <Input placeholder="Model" className="h-8 w-48" value={model} onChange={(e) => setModel(e.target.value)} />
+        <Input
+          placeholder={tc("model")}
+          className="h-8 w-48"
+          value={model}
+          onChange={(e) => setModel(e.target.value)}
+        />
         <Select value={pickedTask} onValueChange={setPickedTask}>
           <SelectTrigger size="sm" className="w-56">
             <SelectValue placeholder={t("taskPlaceholder")} />
@@ -409,11 +415,11 @@ export default function LLMRecordsPage() {
                 <TableRow>
                   <TableHead className="w-[130px]">{t("colTime")}</TableHead>
                   <TableHead className="w-[60px]">{t("colTask")}</TableHead>
-                  <TableHead className="w-[90px]">Worker</TableHead>
-                  <TableHead className="w-[100px]">Profile</TableHead>
-                  <TableHead className="w-[140px]">Model</TableHead>
+                  <TableHead className="w-[90px]">{tc("worker")}</TableHead>
+                  <TableHead className="w-[100px]">{tc("profile")}</TableHead>
+                  <TableHead className="w-[140px]">{tc("model")}</TableHead>
                   <TableHead className="w-[70px]">{t("colLatency")}</TableHead>
-                  <TableHead className="w-[90px]">Tokens</TableHead>
+                  <TableHead className="w-[90px]">{tc("tokens")}</TableHead>
                   <TableHead className="w-[60px]">{t("colStatus")}</TableHead>
                 </TableRow>
               </TableHeader>

@@ -1,3 +1,23 @@
+# Community fork upstream
+
+`hdhdev-droid/artex-community` is forked from `jiwoochris/artex-global`. Track improvements, security fixes, and new versions from that direct upstream while preserving community-specific changes.
+
+The authoritative community baseline and update procedure are in [MAINTAINING.md](MAINTAINING.md#community-upstream). On 2026-10-20, both local checkouts were at `fdfb7a17b7da5e2de716c0e98475ec77a41c64c6`; this is not a live check of the remote repository. Use a separate `global-upstream` remote for this relationship.
+
+The original guidance below was inherited from the global edition. Its original ARTEX baseline, `upstream` remote, and global CI/release examples do not describe the community fork's direct upstream or verification results.
+
+## Community release versioning
+
+Review upstream changes from `jiwoochris/artex-global`, but install releases only from `hdhdev-droid/artex-community` (`selfupdate/github.go`). `version/VERSION` declares `1.0.0`; stable Git tags `vMAJOR.MINOR.PATCH` must match that file. The frontend package version is unrelated. Shared provenance in `version/upstream.json` records artex-global `v0.3.15-global.1-9-gfdfb7a1` and original ARTEX `0.3.15` per the global changelog. Bump PATCH for fixes, MINOR for compatible additions, and MAJOR for breaking changes. Do not republish existing tags or bulk-push upstream tags.
+
+The release workflow validates stable tag syntax and runs only in the community repository. It injects the tag without `v` into binaries, checks the Linux binary's `-version` output, builds five platform packages and community container images, then publishes ZIPs and `SHA256SUMS`. Images use `ghcr.io/hdhdev-droid/artex-community`; pin `ARTEX_TAG=vX.Y.Z` for a fixed deployment. No image is available until an actual community release has been published.
+
+`build.sh` and `build-cloud.sh` share `scripts/build-version.sh`: default builds use `1.0.0-dev`, and explicitly requested stable versions must match VERSION. Direct Go builds also use VERSION plus `-dev`. Development builds cannot self-update. `artex -version` exits before database access, update bootstrap, or server startup. Existing binaries must first be manually replaced with a community build to receive the new update source. A code edit does not change a running binary.
+
+Publish a new tag only for an approved, verified deployment after reviewing prior community releases, release notes and database compatibility. Update VERSION and add `docs/releases/vX.Y.Z.md`, then commit the intended changes before tagging. Tagging the current HEAD without committing pending work would omit that work. This work does not publish a tag or release. Demo previews never query or install releases. See the [Korean maintenance guide](MAINTAINING.md#community-upstream) for the detailed process.
+
+---
+
 # Upstream Sync and Preventing Translation Drift (Maintainer Guide)
 
 [한국어](MAINTAINING.md) · English

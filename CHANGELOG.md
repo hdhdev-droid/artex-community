@@ -6,7 +6,13 @@
 
 상류 ARTEX 프로젝트의 버전별 릴리스 이력(0.3.x 이하)과 기여자 목록은 원본 중국어 그대로 [`CHANGELOG.zh.md`](CHANGELOG.zh.md) 에 보존했습니다. 상류 변경과 대조하기 쉽도록 `README.zh.md` 와 같은 방식으로 원문을 그대로 남깁니다. 각 변경의 자세한 내용과 근거는 저장소 커밋 이력에서 확인할 수 있습니다.
 
-## [Unreleased]
+## [1.0.0] · community 릴리스 준비
+
+community 버전을 `1.0.0`으로 지정했습니다. 기반은 `artex-global v0.3.15-global.1` 이후 9개 커밋을 포함한 `fdfb7a17b7da5e2de716c0e98475ec77a41c64c6`입니다. 원본 ARTEX `0.3.15` 기반이라는 근거는 글로벌판 변경 기록입니다.
+
+버전·출처 표시와 community 전용 GitHub Actions 발행을 구성했습니다. 자세한 변경과 설치 한계는 [v1.0.0 릴리스 노트](docs/releases/v1.0.0.md)를 참조하세요. 실제 태그 발행은 별도 단계입니다.
+
+## [Unreleased] · 상류에서 이어받은 기록
 
 ### 현지화 (i18n)
 

@@ -19,8 +19,10 @@ func TestTaskTemplateHTTPCRUD(t *testing.T) {
 	if err != nil {
 		t.Skipf("postgres unavailable (%v) — skipping", err)
 	}
-	defer m.Close()
-	s := New(context.Background(), m, t.TempDir(), t.TempDir(), t.TempDir())
+	t.Cleanup(func() { _ = m.Close() })
+	// This CRUD test needs the authenticated router, not background task restore,
+	// schedulers or agents that can keep writing after temporary-dir cleanup.
+	s := &Server{m: m, ctx: t.Context(), jwtKey: []byte("task-template-crud-test-only")}
 	h := s.Handler()
 	token, err := signJWT(s.jwtKey)
 	if err != nil {

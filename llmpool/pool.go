@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync/atomic"
 
+	"github.com/Autumn-27/artex/internal/chatgpt"
 	"github.com/Autumn-27/norma/llm"
 )
 
@@ -229,6 +230,9 @@ func statusOf(err error) int {
 // pollute the run's termination diagnosis. Never on 400 either: a malformed or
 // over-long request fails identically everywhere.
 func shouldFailover(ctx context.Context, err error) bool {
+	if chatgpt.RequiresAction(err) {
+		return false
+	}
 	if err == nil {
 		return false
 	}

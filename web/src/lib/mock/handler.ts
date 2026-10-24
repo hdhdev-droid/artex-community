@@ -1,10 +1,10 @@
+import { mockText, scopeErrorText } from "@/i18n/client-text";
 // Mock 路由：把 (method, path) 映射到 lib/mock/data 的静态数据。
 // 未命中的一律返回安全默认（[] / {} / {ok:true}），保证任何页面都不崩。
 // 只在 NEXT_PUBLIC_MOCK=1 时经由 api.ts 的 http() 短路进入这里。
 
 import {
   classifyCompanyScopeLine,
-  companyScopeErrorText,
   companyScopeRuleError,
   isCompanyScopeKind,
   normalizeCompanyScopeValue,
@@ -22,6 +22,7 @@ import type {
   FindingTraffic,
   FindingTrafficBinding,
   IntentAsset,
+  ReleaseInfo,
   ScopeRow,
   Task,
   TaskArchive,
@@ -33,10 +34,13 @@ import type {
   TaskTemplate,
   TrafficEvidenceRole,
   TrafficEvidenceSnapshot,
+  UpdateCheck,
 } from "../types";
 import * as D from "./data";
+import { sampleTaskReport } from "./reports";
 
 const delay = (ms = 120) => new Promise((r) => setTimeout(r, ms));
+const releaseInfo = JSON.parse(process.env.NEXT_PUBLIC_RELEASE_INFO ?? "null") as ReleaseInfo | null;
 
 // Requests mutate a runtime copy, never the exported fixtures. This keeps module
 // initialization deterministic for tests/HMR while preserving state across mock calls.
@@ -51,6 +55,13 @@ const mockTaskCategories = structuredClone(D.taskCategories);
 const mockConversations = structuredClone(D.conversations);
 const mockRetests: FindingRetest[] = [];
 const mockRetestMessages: Record<number, Activity[]> = {};
+
+export function mockReport(taskId = D.ACTIVE_TASK): string {
+  return sampleTaskReport(
+    mockTasks.find((task) => task.id === taskId),
+    mockFindings,
+  );
+}
 
 // ── 关联流量证据(finding traffic) ─────────────────────────────────────────────
 // 后端把请求/响应快照独立存到 evidence 表,前端详情页用 FindingTrafficPanel 展示。
@@ -281,12 +292,12 @@ function publicMockTask(task: Task): Task {
 
 function mockArchiveTask(taskID: string): MockTaskArchive {
   const task = mockTasks.find((item) => item.id === taskID);
-  if (!task) throw new Error("Task not found");
+  if (!task) throw new Error(mockText("e0"));
   if (!["paused", "done", "failed", "timeout"].includes(task.status) && !task.paused) {
-    throw new Error(task.queued ? "Queued tasks must be paused first" : "Running tasks must be paused first");
+    throw new Error(task.queued ? mockText("e1") : mockText("e2"));
   }
   const existing = mockTaskArchives.find((item) => item.task_id === mockArchiveTaskID(taskID));
-  if (existing) throw new Error("The task is already in the archive queue");
+  if (existing) throw new Error(mockText("e3"));
   const dependent = mockTasks.find(
     (candidate) =>
       candidate.id !== taskID &&
@@ -297,8 +308,7 @@ function mockArchiveTask(taskID: string): MockTaskArchive {
           (archive.state === "archive_queued" || archive.state === "archiving"),
       ),
   );
-  if (dependent)
-    throw new Error(`Cannot archive now: unarchived task #${dependent.id} directly inherits from this task`);
+  if (dependent) throw new Error(mockText("archiveDependent", { id: dependent.id }));
 
   const numericTaskID = mockArchiveTaskID(taskID);
   const assetIDs = mockAssets.filter((asset) => asset.task_ids.includes(numericTaskID)).map((asset) => asset.id);
@@ -381,8 +391,7 @@ function mockArchiveTask(taskID: string): MockTaskArchive {
 }
 
 function mockRestoreArchive(archive: MockTaskArchive): void {
-  if (archive.state !== "ready" && archive.state !== "restore_failed")
-    throw new Error("Cannot restore from the current archive state");
+  if (archive.state !== "ready" && archive.state !== "restore_failed") throw new Error(mockText("e4"));
   archive.state = "restore_queued";
   archive.phase = "Restore pending";
   archive.progress = 0;
@@ -416,13 +425,11 @@ function mockRestoreArchive(archive: MockTaskArchive): void {
 }
 
 function mockDeleteArchive(archive: MockTaskArchive): void {
-  if (archive.state !== "ready" && archive.state !== "delete_failed")
-    throw new Error("Cannot permanently delete from the current archive state");
+  if (archive.state !== "ready" && archive.state !== "delete_failed") throw new Error(mockText("e5"));
   const dependent = mockTaskArchives.find(
     (candidate) => candidate.id !== archive.id && candidate.source_task_ids.includes(archive.task_id),
   );
-  if (dependent)
-    throw new Error(`Cannot permanently delete this archive: task #${dependent.task_id} still depends on it`);
+  if (dependent) throw new Error(mockText("deleteDependent", { id: dependent.task_id }));
   archive.state = "delete_queued";
   archive.phase = "Pending permanent deletion";
   archive.progress = 0;
@@ -876,7 +883,7 @@ function mockRoleResolution(task: Task, agentKey: "mainagent" | "planner" | "wor
 function bodyIDs(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   const ids = [...new Set(value.map((item) => String(item)).filter(Boolean))];
-  if (ids.length > 100) throw new Error("Batch operations support up to 100 IDs at a time");
+  if (ids.length > 100) throw new Error(mockText("e6"));
   return ids;
 }
 
@@ -893,10 +900,10 @@ let nextMockWorkerMessageActivitySeq = mockActivity.reduce((maximum, item) => Ma
 
 function controlMockIntent(id: string, action: "pause" | "resume"): MockIntentControlResult {
   const intent = mockIntents.find((item) => item.id === id);
-  if (!intent) return { ok: false, error: "Intent not found" };
+  if (!intent) return { ok: false, error: mockText("e7") };
   const requiredState = action === "pause" ? "running" : "paused";
   if (intent.inherited || intent.state !== requiredState) {
-    return { ok: false, state: intent.state, error: "The worker state has changed" };
+    return { ok: false, state: intent.state, error: mockText("e8") };
   }
   intent.state = action === "pause" ? "paused" : "open";
   return { ok: true, state: intent.state };
@@ -909,11 +916,11 @@ function sendMockWorkerMessage(
 ): MockIntentControlResult & { activitySeq?: number; requestId?: string } {
   const normalizedMessage = message.trim();
   const normalizedRequestId = requestId.trim();
-  if (!normalizedRequestId) return { ok: false, error: "request_id cannot be empty" };
+  if (!normalizedRequestId) return { ok: false, error: mockText("e9") };
   const previous = mockWorkerMessages.get(normalizedRequestId);
   if (previous) {
     if (previous.intentId !== id || previous.message !== normalizedMessage) {
-      return { ok: false, error: "request_id has already been used by another worker message" };
+      return { ok: false, error: mockText("e10") };
     }
     return {
       ok: true,
@@ -923,17 +930,17 @@ function sendMockWorkerMessage(
     };
   }
   const intent = mockIntents.find((item) => item.id === id);
-  if (!intent) return { ok: false, error: "Intent not found" };
+  if (!intent) return { ok: false, error: mockText("e7") };
   if (intent.inherited || intent.state !== "paused") {
     return {
       ok: false,
       state: intent.state,
-      error: "Messages can only be sent to a paused worker. Please pause it first",
+      error: mockText("e11"),
     };
   }
-  if (!normalizedMessage) return { ok: false, state: intent.state, error: "The message cannot be empty" };
+  if (!normalizedMessage) return { ok: false, state: intent.state, error: mockText("e12") };
   if (Array.from(normalizedMessage).length > 4000) {
-    return { ok: false, state: intent.state, error: "The message cannot exceed 4000 characters" };
+    return { ok: false, state: intent.state, error: mockText("e13") };
   }
 
   // The real endpoint transitions the intent paused->running, records the user turn,
@@ -967,13 +974,13 @@ function sendMockWorkerMessage(
 
 function controlMockTask(id: string, action: "pause" | "resume"): BatchControlItem {
   const task = mockTasks.find((item) => item.id === id);
-  if (!task) return { id, ok: false, error: "Task not found" };
+  if (!task) return { id, ok: false, error: mockText("e0") };
   if (task.status === "done" || task.status === "failed" || task.status === "timeout") {
-    return { id, ok: false, status: task.status, error: "Tasks in a finished state cannot be controlled" };
+    return { id, ok: false, status: task.status, error: mockText("e14") };
   }
   if (action === "pause") {
     if (task.paused || task.status === "paused") {
-      return { id, ok: false, status: task.status, error: "The task is already paused" };
+      return { id, ok: false, status: task.status, error: mockText("e15") };
     }
     task.paused = true;
     task.queued = false;
@@ -981,7 +988,7 @@ function controlMockTask(id: string, action: "pause" | "resume"): BatchControlIt
     task.engine_mode = "paused";
   } else {
     if (!task.paused && task.status !== "paused") {
-      return { id, ok: false, status: task.status, error: "The task is not paused" };
+      return { id, ok: false, status: task.status, error: mockText("e16") };
     }
     task.paused = false;
     task.queued = false;
@@ -1041,6 +1048,23 @@ export async function mockHandle<T>(method: string, rawPath: string, body?: Body
 
 function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Record<string, unknown>): unknown {
   const task = q.get("task") ?? undefined;
+
+  if (path === "/update/check" && m === "GET") {
+    return {
+      current: releaseInfo ? `${releaseInfo.version}-demo` : "dev",
+      release: releaseInfo ?? undefined,
+      mode: "demo",
+      os: "",
+      arch: "",
+      repo: "hdhdev-droid/artex-community",
+      has_backup: false,
+      has_update: false,
+      comparable: false,
+    } satisfies UpdateCheck;
+  }
+  if (path === "/update/apply" || path === "/update/rollback") {
+    throw new Error(mockText("updatesDisabled"));
+  }
 
   if (path === "/chat/mentions" && m === "GET") {
     const kind = q.get("kind") ?? "";
@@ -1119,18 +1143,18 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
   }
   if (seg[0] === "task-archives" && seg.length === 2 && m === "GET") {
     const archive = mockTaskArchives.find((item) => item.id === Number(seg[1]));
-    if (!archive) throw new Error("Archive not found");
+    if (!archive) throw new Error(mockText("e17"));
     return publicMockTaskArchive(archive);
   }
   if (seg[0] === "task-archives" && seg[2] === "restore" && seg.length === 3 && m === "POST") {
     const archive = mockTaskArchives.find((item) => item.id === Number(seg[1]));
-    if (!archive) throw new Error("Archive not found");
+    if (!archive) throw new Error(mockText("e17"));
     mockRestoreArchive(archive);
     return publicMockTaskArchive(archive);
   }
   if (seg[0] === "task-archives" && seg.length === 2 && m === "DELETE") {
     const archive = mockTaskArchives.find((item) => item.id === Number(seg[1]));
-    if (!archive) throw new Error("Archive not found");
+    if (!archive) throw new Error(mockText("e17"));
     mockDeleteArchive(archive);
     return publicMockTaskArchive(archive);
   }
@@ -1138,7 +1162,7 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
     const ids = bodyIDs(b.archive_ids).map(Number);
     const items = ids.map<ArchiveBatchItem>((id) => {
       const archive = mockTaskArchives.find((item) => item.id === id);
-      if (!archive) return { id: String(id), archive_id: id, ok: false, queued: false, error: "Archive not found" };
+      if (!archive) return { id: String(id), archive_id: id, ok: false, queued: false, error: mockText("e17") };
       try {
         mockRestoreArchive(archive);
         return { id: String(id), archive_id: id, ok: true, queued: true };
@@ -1152,7 +1176,7 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
     const ids = bodyIDs(b.archive_ids).map(Number);
     const items = ids.map<ArchiveBatchItem>((id) => {
       const archive = mockTaskArchives.find((item) => item.id === id);
-      if (!archive) return { id: String(id), archive_id: id, ok: false, queued: false, error: "Archive not found" };
+      if (!archive) return { id: String(id), archive_id: id, ok: false, queued: false, error: mockText("e17") };
       try {
         mockDeleteArchive(archive);
         return { id: String(id), archive_id: id, ok: true, queued: true };
@@ -1190,7 +1214,7 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
       }
     }
     return {
-      items: requested.map((id) => byID.get(id) ?? { id, ok: false, queued: false, error: "Task not found" }),
+      items: requested.map((id) => byID.get(id) ?? { id, ok: false, queued: false, error: mockText("e0") }),
     };
   }
   if (seg[0] === "tasks" && seg[2] === "archive" && seg.length === 3 && m === "POST") {
@@ -1211,11 +1235,11 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
     const sourceTaskIDs = [...((b.source_task_ids as string[] | undefined) ?? [])];
     const companyIDs = [...new Set((b.company_ids as number[] | undefined) ?? [])];
     if (companyIDs.some((companyID) => !mockCompanies.some((company) => company.id === companyID))) {
-      throw new Error("No company is linked, or it is invalid");
+      throw new Error(mockText("e18"));
     }
     const categoryID = typeof b.category_id === "number" ? b.category_id : undefined;
     const category = categoryID === undefined ? undefined : mockTaskCategories.find((item) => item.id === categoryID);
-    if (categoryID !== undefined && !category) throw new Error("Task category not found");
+    if (categoryID !== undefined && !category) throw new Error(mockText("e19"));
     const created: Task = {
       id,
       name: String(b.name ?? ""),
@@ -1263,9 +1287,9 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
   if (path === "/task-categories" && m === "GET") return { categories: mockTaskCategorySnapshot() };
   if (path === "/task-categories" && m === "POST") {
     const name = normalizedTemplateName(b.name);
-    if (!name) throw new Error("The category name cannot be empty");
+    if (!name) throw new Error(mockText("e20"));
     if (mockTaskCategories.some((category) => category.name.toLowerCase() === name.toLowerCase())) {
-      throw new Error("This category name already exists");
+      throw new Error(mockText("e21"));
     }
     const now = new Date().toISOString();
     const category: TaskCategory = {
@@ -1280,11 +1304,11 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
   }
   if (seg[0] === "task-categories" && seg.length === 2 && m === "PATCH") {
     const category = mockTaskCategories.find((item) => item.id === Number(seg[1]));
-    if (!category) throw new Error("Task category not found");
+    if (!category) throw new Error(mockText("e19"));
     const name = normalizedTemplateName(b.name);
-    if (!name) throw new Error("The category name cannot be empty");
+    if (!name) throw new Error(mockText("e20"));
     if (mockTaskCategories.some((item) => item.id !== category.id && item.name.toLowerCase() === name.toLowerCase())) {
-      throw new Error("This category name already exists");
+      throw new Error(mockText("e21"));
     }
     category.name = name;
     category.updated_at = new Date().toISOString();
@@ -1296,7 +1320,7 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
   if (seg[0] === "task-categories" && seg.length === 2 && m === "DELETE") {
     const categoryID = Number(seg[1]);
     const index = mockTaskCategories.findIndex((item) => item.id === categoryID);
-    if (index < 0) throw new Error("Task category not found");
+    if (index < 0) throw new Error(mockText("e19"));
     mockTaskCategories.splice(index, 1);
     for (const task of mockTasks) {
       if (task.category_id !== categoryID) continue;
@@ -1308,14 +1332,13 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
   if (path === "/tasks/category/batch" && m === "POST") {
     const requested = Array.isArray(b.task_ids) ? b.task_ids.map(String) : [];
     const taskIDs = [...new Set(requested)];
-    if (taskIDs.length === 0 || taskIDs.length > 100)
-      throw new Error("task_ids must contain between 1 and 100 entries");
+    if (taskIDs.length === 0 || taskIDs.length > 100) throw new Error(mockText("e22"));
     const categoryID = typeof b.category_id === "number" ? b.category_id : undefined;
     const category = categoryID === undefined ? undefined : mockTaskCategories.find((item) => item.id === categoryID);
-    if (categoryID !== undefined && !category) throw new Error("Task category not found");
+    if (categoryID !== undefined && !category) throw new Error(mockText("e19"));
     const items = taskIDs.map((id) => {
       const task = mockTasks.find((item) => item.id === id);
-      if (!task) return { id, ok: false, error: "task not found" };
+      if (!task) return { id, ok: false, error: mockText("e0") };
       task.category_id = category?.id;
       task.category_name = category?.name;
       return { id, ok: true };
@@ -1327,10 +1350,10 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
   }
   if (seg[0] === "tasks" && seg[2] === "category" && seg.length === 3 && m === "PATCH") {
     const task = mockTasks.find((item) => item.id === seg[1]);
-    if (!task) throw new Error("Task not found");
+    if (!task) throw new Error(mockText("e0"));
     const categoryID = typeof b.category_id === "number" ? b.category_id : undefined;
     const category = categoryID === undefined ? undefined : mockTaskCategories.find((item) => item.id === categoryID);
-    if (categoryID !== undefined && !category) throw new Error("Task category not found");
+    if (categoryID !== undefined && !category) throw new Error(mockText("e19"));
     task.category_id = category?.id;
     task.category_name = category?.name;
     return task;
@@ -1341,11 +1364,11 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
     const name = normalizedTemplateName(b.name);
     const description = String(b.description ?? "").trim();
     const goal = String(b.goal ?? "").trim();
-    if (!name || !description || !goal) throw new Error("Please enter a template name, description, and goal");
+    if (!name || !description || !goal) throw new Error(mockText("e23"));
     if (
       mockTaskTemplates.some((template) => normalizedTemplateName(template.name).toLowerCase() === name.toLowerCase())
     ) {
-      throw new Error("This template name already exists");
+      throw new Error(mockText("e24"));
     }
     const nextID = mockTaskTemplates.reduce((max, template) => Math.max(max, template.id), 0) + 1;
     const created: TaskTemplate = {
@@ -1365,13 +1388,13 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
     const name = typeof b.name === "string" ? normalizedTemplateName(b.name) : template.name;
     const description = typeof b.description === "string" ? b.description.trim() : template.description;
     const goal = typeof b.goal === "string" ? b.goal.trim() : template.goal;
-    if (!name || !description || !goal) throw new Error("Please enter a template name, description, and goal");
+    if (!name || !description || !goal) throw new Error(mockText("e23"));
     if (
       mockTaskTemplates.some(
         (item) => item.id !== template.id && normalizedTemplateName(item.name).toLowerCase() === name.toLowerCase(),
       )
     ) {
-      throw new Error("This template name already exists");
+      throw new Error(mockText("e24"));
     }
     template.name = name;
     template.description = description;
@@ -1388,12 +1411,12 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
   }
   if (seg[0] === "tasks" && seg.length === 2 && m === "GET") {
     const task = mockTasks.find((item) => item.id === seg[1]);
-    if (!task) throw new Error("Task not found");
+    if (!task) throw new Error(mockText("e0"));
     return publicMockTask(task);
   }
   if (seg[0] === "tasks" && seg.length === 2 && m === "PATCH") {
     const task = mockTasks.find((item) => item.id === seg[1]);
-    if (!task) throw new Error("Task not found");
+    if (!task) throw new Error(mockText("e0"));
     if (typeof b.name === "string") task.name = b.name.trim();
     if (typeof b.pinned === "boolean") {
       task.pinned = b.pinned;
@@ -1475,7 +1498,7 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
   }
   if (seg[0] === "tasks" && seg[2] === "llm" && seg[3] === "resolution" && m === "GET") {
     const task = mockTasks.find((item) => item.id === seg[1]);
-    if (!task) throw new Error("Task not found");
+    if (!task) throw new Error(mockText("e0"));
     return {
       mainagent: mockRoleResolution(task, "mainagent"),
       planner: mockRoleResolution(task, "planner"),
@@ -1496,7 +1519,7 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
         intent.inherited ||
         (intent.state !== "running" && intent.state !== "paused" && intent.state !== "open")
       ) {
-        throw new Error("The worker state has changed");
+        throw new Error(mockText("e8"));
       }
       const numId = Number(id.replace(/\D/g, "")) || 0;
       if (b.mode === "hard") {
@@ -1520,13 +1543,13 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
     }
     const action = b.action === "resume" ? "resume" : "pause";
     const result = controlMockIntent(id, action);
-    if (!result.ok) throw new Error(result.error ?? "The worker state has changed");
+    if (!result.ok) throw new Error(result.error ?? mockText("e8"));
     return { id: Number(id.replace(/\D/g, "")) || 0, state: result.state };
   }
   if (seg[0] === "tasks" && seg[2] === "intents" && seg[4] === "messages" && m === "POST") {
     const id = seg[3];
     const result = sendMockWorkerMessage(id, String(b.message ?? ""), String(b.request_id ?? ""));
-    if (!result.ok) throw new Error(result.error ?? "The worker state has changed");
+    if (!result.ok) throw new Error(result.error ?? mockText("e8"));
     return {
       id: Number(id.replace(/\D/g, "")) || 0,
       state: result.state ?? "running",
@@ -1537,7 +1560,7 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
   if (seg[0] === "tasks" && seg.length === 3 && seg[2] === "control" && m === "POST") {
     const action = b.action === "resume" ? "resume" : "pause";
     const result = controlMockTask(seg[1], action);
-    if (!result.ok) throw new Error(result.error ?? "The task state has changed");
+    if (!result.ok) throw new Error(result.error ?? mockText("e25"));
     const task = mockTasks.find((item) => item.id === seg[1]);
     return { id: seg[1], paused: Boolean(task?.paused), queued: Boolean(task?.queued), status: task?.status ?? "" };
   }
@@ -1687,15 +1710,15 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
   if (seg[0] === "tasks" && seg[2] === "assets" && seg.length === 3 && m === "POST") {
     const task = mockTasks.find((item) => item.id === seg[1]);
     const numericTaskID = mockTaskAssetID(seg[1]);
-    if (!task || numericTaskID === undefined) throw new Error("Task not found");
+    if (!task || numericTaskID === undefined) throw new Error(mockText("e0"));
     if (Array.isArray(b.scope)) {
-      if (b.scope.length === 0) throw new Error("Please enter a valid test scope");
+      if (b.scope.length === 0) throw new Error(mockText("e26"));
       const rules: CompanyScopeRule[] = b.scope.map((candidate, index) => {
         if (typeof candidate === "string") {
           const issue = classifyCompanyScopeLine(candidate, index + 1);
           if (!issue.rule || issue.error)
             throw new Error(
-              `Scope entry #${index + 1} is invalid: ${companyScopeErrorText(issue.error) || "unrecognized"}`,
+              mockText("invalidScope", { index: index + 1, reason: scopeErrorText(issue.error) || mockText("e48") }),
             );
           return issue.rule;
         }
@@ -1707,7 +1730,9 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
             : classifyCompanyScopeLine(value, index + 1).rule;
         const error = rule ? companyScopeRuleError(rule) : "";
         if (!rule || error)
-          throw new Error(`Scope entry #${index + 1} is invalid: ${companyScopeErrorText(error) || "unrecognized"}`);
+          throw new Error(
+            mockText("invalidScope", { index: index + 1, reason: scopeErrorText(error) || mockText("e48") }),
+          );
         return rule;
       });
       const mutation: TaskAssetScopeMutation = {
@@ -1777,10 +1802,9 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
     }
     const ids = [...new Set(Array.isArray(b.asset_ids) ? b.asset_ids.map(Number) : [])];
     const sourceSummary = String(b.source_summary ?? "").trim();
-    if (ids.length === 0 || ids.length > 100 || !sourceSummary)
-      throw new Error("Please select an asset and enter a source description");
+    if (ids.length === 0 || ids.length > 100 || !sourceSummary) throw new Error(mockText("e27"));
     const requestedAssets = ids.map((id) => mockAssets.find((asset) => asset.id === id));
-    if (requestedAssets.some((asset) => !asset)) throw new Error("Asset not found");
+    if (requestedAssets.some((asset) => !asset)) throw new Error(mockText("e28"));
     const mutation: TaskAssetMutation = { requested: ids.length, attached: 0, existing: 0 };
     for (const asset of requestedAssets) {
       if (!asset) continue;
@@ -1800,8 +1824,8 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
   if (seg[0] === "tasks" && seg[2] === "assets" && seg.length === 4 && m === "DELETE") {
     const numericTaskID = mockTaskAssetID(seg[1]);
     const asset = mockAssets.find((item) => item.id === Number(seg[3]));
-    if (numericTaskID === undefined || !asset) throw new Error("Task or asset not found");
-    if (!asset.task_ids.includes(numericTaskID)) throw new Error("The asset is not linked to the current task");
+    if (numericTaskID === undefined || !asset) throw new Error(mockText("e29"));
+    if (!asset.task_ids.includes(numericTaskID)) throw new Error(mockText("e30"));
     asset.task_ids = asset.task_ids.filter((id) => id !== numericTaskID);
     deleteMockTaskAssetSources(seg[1], asset.id);
     return { detached: asset.id };
@@ -1848,9 +1872,9 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
   if (path === "/companies" && m === "GET") return structuredClone(mockCompanies);
   if (path === "/companies" && m === "POST") {
     const name = String(b.name ?? "").trim();
-    if (!name) throw new Error("The company name cannot be empty");
+    if (!name) throw new Error(mockText("e31"));
     if (mockCompanies.some((company) => company.name.toLowerCase() === name.toLowerCase())) {
-      throw new Error("This company name already exists");
+      throw new Error(mockText("e32"));
     }
     const id = mockCompanies.reduce((max, company) => Math.max(max, company.id), 0) + 1;
     const scopeResult = mockScopeRows(id, b.scope);
@@ -1866,18 +1890,17 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
   }
   if (seg[0] === "companies" && seg[2] === "scope" && m === "POST") {
     const company = mockCompanies.find((item) => item.id === Number(seg[1]));
-    if (!company) throw new Error("Company not found");
+    if (!company) throw new Error(mockText("e33"));
     const reset = b.reset === true;
     const scopeResult = mockScopeRows(company.id, b.scope, reset ? [] : (company.scope ?? []));
-    if (reset && scopeResult.invalid > 0)
-      throw new Error("The company scope contains an invalid rule, so the existing scope was not overwritten");
+    if (reset && scopeResult.invalid > 0) throw new Error(mockText("e34"));
     company.scope = reset ? scopeResult.rows : [...(company.scope ?? []), ...scopeResult.rows];
     return { added: scopeResult.rows.length, skipped: scopeResult.skipped, invalid: scopeResult.invalid };
   }
   if (seg[0] === "companies" && seg.length === 2 && m === "DELETE") {
     const id = Number(seg[1]);
     const index = mockCompanies.findIndex((item) => item.id === id);
-    if (index < 0) throw new Error("Company not found");
+    if (index < 0) throw new Error(mockText("e33"));
     mockCompanies.splice(index, 1);
     let assetsDeleted = 0;
     for (let assetIndex = mockAssets.length - 1; assetIndex >= 0; assetIndex--) {
@@ -1982,7 +2005,7 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
   }
   if (seg[0] === "exploration" && seg[1] === "findings" && seg[3] === "retests") {
     const finding = mockFindings.find((item) => item.id === seg[2]);
-    if (!finding) throw new Error("The finding does not exist");
+    if (!finding) throw new Error(mockText("e35"));
     const findingID = D.findings.findIndex((item) => item.id === finding.id) + 1;
     if (m === "GET") return { retests: structuredClone(mockRetests.filter((item) => item.finding_id === findingID)) };
     if (m === "POST") {
@@ -2039,11 +2062,11 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
   if (seg[0] === "exploration" && seg[1] === "findings" && seg[3] === "deepen" && m === "POST") {
     const finding = mockFindings.find((candidate) => candidate.id === seg[2]);
     const description = String(b.description ?? "").trim();
-    if (!description) throw new Error("description is required");
-    if ([...description].length > 4000) throw new Error("description must be at most 4000 characters");
-    if (!finding) throw new Error("finding not found");
+    if (!description) throw new Error(mockText("e36"));
+    if ([...description].length > 4000) throw new Error(mockText("e37"));
+    if (!finding) throw new Error(mockText("e39"));
     if (!finding.task_id || !mockTasks.some((candidate) => candidate.id === finding.task_id)) {
-      throw new Error("finding origin task or node is no longer available");
+      throw new Error(mockText("e38"));
     }
     return {
       task_id: finding.task_id,
@@ -2056,7 +2079,7 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
   // seg = ["exploration","findings",<id>,"traffic", ...]
   if (seg[0] === "exploration" && seg[1] === "findings" && seg[3] === "traffic") {
     const findingID = seg[2];
-    if (!mockFindings.some((item) => item.id === findingID)) throw new Error("Finding not found");
+    if (!mockFindings.some((item) => item.id === findingID)) throw new Error(mockText("e39"));
     const bindings = mockTrafficBindings(findingID);
     const bumpVersion = () => {
       mockFindingTrafficVersion[findingID] = (mockFindingTrafficVersion[findingID] ?? 1) + 1;
@@ -2065,7 +2088,7 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
     // 单条报文详情:GET /traffic/{binding_id}
     if (seg.length === 5 && seg[4] !== "order" && m === "GET") {
       const binding = bindings.find((item) => item.id === seg[4]);
-      if (!binding) throw new Error("Evidence not found");
+      if (!binding) throw new Error(mockText("e40"));
       const body = mockEvidenceBodies[binding.snapshot.source_traffic_id] ?? { req: "", resp: "" };
       return {
         binding: structuredClone(binding),
@@ -2076,7 +2099,7 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
     // 报文正文分页:GET /traffic/{binding_id}/body —— demo 正文不截断,直接返回空续页。
     if (seg.length === 6 && seg[5] === "body" && m === "GET") {
       const binding = bindings.find((item) => item.id === seg[4]);
-      if (!binding) throw new Error("Evidence not found");
+      if (!binding) throw new Error(mockText("e40"));
       const body = mockEvidenceBodies[binding.snapshot.source_traffic_id] ?? { req: "", resp: "" };
       const side = q.get("side") === "request" ? body.req : body.resp;
       return mockEvidencePreview(side);
@@ -2110,7 +2133,7 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
     // 编辑说明 / 解绑:PATCH|DELETE /traffic/{binding_id}
     if (seg.length === 5 && (m === "PATCH" || m === "DELETE")) {
       const index = bindings.findIndex((item) => item.id === seg[4]);
-      if (index < 0) throw new Error("Evidence not found");
+      if (index < 0) throw new Error(mockText("e40"));
       if (m === "DELETE") {
         bindings.splice(index, 1);
       } else {
@@ -2393,7 +2416,7 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
       : [];
     const items = ids.map((id) => {
       const index = mockConversations.findIndex((item) => item.id === id);
-      if (index < 0) return { id, ok: false, error: "conversation not found" };
+      if (index < 0) return { id, ok: false, error: mockText("e41") };
       mockConversations.splice(index, 1);
       stopMockRetest(id);
       for (const retest of mockRetests) if (retest.conversation_id === id) retest.conversation_id = null;
@@ -2463,9 +2486,8 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
   if (seg[0] === "intercept" && seg[1] === "pending" && seg[3] === "decide") {
     const id = Number(seg[2]);
     const row = mockInterceptHistory.find((r) => r.id === id) ?? mockInterceptPending.find((r) => r.id === id);
-    if (row?.status !== "pending")
-      throw new Error("This approval has already been processed or does not exist. Please refresh the records");
-    if (b.decision !== "allowed" && b.decision !== "denied") throw new Error("Invalid approval action");
+    if (row?.status !== "pending") throw new Error(mockText("e42"));
+    if (b.decision !== "allowed" && b.decision !== "denied") throw new Error(mockText("e43"));
     row.status = b.decision;
     row.decided_at = new Date().toISOString();
     const detail = mockInterceptDetails[id];
@@ -2480,7 +2502,7 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
   }
   if (seg[0] === "intercept" && seg[1] === "history" && seg.length === 3) {
     const row = mockInterceptHistory.find((r) => r.id === Number(seg[2]));
-    if (!row) throw new Error("Approval record not found");
+    if (!row) throw new Error(mockText("e44"));
     return { ...row, audit: mockInterceptDetails[row.id] ?? null };
   }
   if (seg[0] === "intercept" && seg[1] === "pending" && seg.length === 3 && m === "GET")
@@ -2488,10 +2510,8 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
   if (path === "/intercept/history" || (seg[0] === "intercept" && seg[1] === "task")) {
     const status = q.get("status") || "";
     const decisionSource = q.get("decision_source") || "";
-    if (status && !["pending", "allowed", "denied", "timeout"].includes(status))
-      throw new Error("Invalid approval status");
-    if (decisionSource && !["model", "rule", "unknown"].includes(decisionSource))
-      throw new Error("Invalid decision source");
+    if (status && !["pending", "allowed", "denied", "timeout"].includes(status)) throw new Error(mockText("e45"));
+    if (decisionSource && !["model", "rule", "unknown"].includes(decisionSource)) throw new Error(mockText("e46"));
     const filtered = mockInterceptHistory.filter((row) => {
       const source =
         row.decision_source || (row.rule_id ? "rule" : row.reason?.startsWith("[模型]") ? "model" : "unknown");
@@ -2539,7 +2559,7 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
   // 必须显式命中：路径以 s 结尾会被下面的读兜底判成集合返回 []，items 就成了 undefined。
   if (seg.at(-1) === "side-questions") {
     if (m === "GET") return { items: [], current: null, next_cursor: 0, snapshot: null };
-    if (m === "POST") throw new Error("Follow-up questions are not supported in demo mode");
+    if (m === "POST") throw new Error(mockText("e47"));
   }
 
   // ── 写操作兜底：成功但不落库 ──

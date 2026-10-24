@@ -25,6 +25,7 @@ import (
 
 	"github.com/Autumn-27/artex/agent"
 	"github.com/Autumn-27/artex/db"
+	"github.com/Autumn-27/artex/internal/chatgpt"
 	"github.com/Autumn-27/norma/llm"
 	"github.com/Autumn-27/norma/skill"
 )
@@ -1854,7 +1855,30 @@ func (s *Server) pgListProfiles(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 500, err.Error())
 		return
 	}
-	writeJSON(w, 200, map[string]any{"profiles": llmProfileDTOs(ps)})
+	profiles := llmProfileDTOs(ps)
+	accounts := map[string]chatgpt.Account{}
+	if s.chatGPT.store != nil {
+		if list, e := s.chatGPT.store.Accounts(); e == nil {
+			for _, a := range list {
+				accounts[a.ID] = a
+			}
+		}
+	}
+	for i, p := range ps {
+		// The ordinary list deliberately omits credentials. Resolve only to label
+		// the auth method; only non-secret account metadata is returned.
+		stored, e := pg.ProfileByID(p.ID)
+		if e != nil || stored == nil {
+			continue
+		}
+		if id := chatgpt.AccountID(stored.APIKey); id != "" {
+			a := accounts[id]
+			profiles[i].AuthAccountID, profiles[i].AuthAccountLabel, profiles[i].AuthConnected = id, a.Label, a.Connected
+			profiles[i].APIKeyHint = "ChatGPT"
+			profiles[i].Format, profiles[i].BaseURL, profiles[i].Proxy, profiles[i].Streaming = "openai-responses", chatgpt.BaseURL, "", true
+		}
+	}
+	writeJSON(w, 200, map[string]any{"profiles": profiles})
 }
 
 func (s *Server) pgSaveProfile(w http.ResponseWriter, r *http.Request) {
@@ -1879,6 +1903,25 @@ func (s *Server) pgSaveProfile(w http.ResponseWriter, r *http.Request) {
 	p := body.LLMProfile
 	p.APIKey = body.APIKey
 	p.Streaming = body.Streaming == nil || *body.Streaming
+	// OAuth references can only be created by the authenticated connection flow.
+	if chatgpt.AccountID(body.APIKey) != "" {
+		writeErr(w, 400, "chatgpt_profile_managed")
+		return
+	}
+	if p.ID > 0 {
+		old, err := pg.ProfileByID(p.ID)
+		if err != nil {
+			writeErr(w, 500, "oauth_save_failed")
+			return
+		}
+		if old != nil && chatgpt.AccountID(old.APIKey) != "" {
+			if body.APIKey != "" || p.Format != "openai-responses" || p.BaseURL != chatgpt.BaseURL || p.Proxy != "" || !p.Streaming || p.SessionHeaderKey != "" {
+				writeErr(w, 400, "chatgpt_profile_managed")
+				return
+			}
+			p.APIKey = old.APIKey
+		}
+	}
 	// 输出上限:负数无意义,归零(= 不发送该字段)。字段名开关只有 Chat Completions
 	// 用得上——anthropic 与 openai-responses 各自定死了字段名,存下来只会误导后续读者,
 	// 故非 openai 格式一律清空。未知取值同样清空,避免把 DB CHECK 的报错甩给用户。
@@ -2070,6 +2113,19 @@ func (s *Server) pgListModels(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if id := chatgpt.AccountID(apiKey); id != "" {
+		models, err := s.chatGPT.store.Models(r.Context(), id)
+		if err != nil {
+			writeErr(w, 502, err.Error())
+			return
+		}
+		slugs := make([]string, 0, len(models))
+		for _, m := range models {
+			slugs = append(slugs, m.Slug)
+		}
+		writeJSON(w, 200, map[string]any{"ok": true, "models": slugs})
+		return
+	}
 	baseURL := strings.TrimRight(strings.TrimSpace(req.BaseURL), "/")
 	provider := strings.TrimSpace(req.Provider)
 
