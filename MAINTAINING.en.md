@@ -14,7 +14,7 @@ The release workflow validates stable tag syntax and runs only in the community 
 
 `build.sh` and `build-cloud.sh` share `scripts/build-version.sh`: default builds use `1.0.0-dev`, and explicitly requested stable versions must match VERSION. Direct Go builds also use VERSION plus `-dev`. Development builds cannot self-update. `artex -version` exits before database access, update bootstrap, or server startup. Existing binaries must first be manually replaced with a community build to receive the new update source. A code edit does not change a running binary.
 
-Publish a new tag only for an approved, verified deployment after reviewing prior community releases, release notes and database compatibility. Update VERSION and add `docs/releases/vX.Y.Z.md`, then commit the intended changes before tagging. Tagging the current HEAD without committing pending work would omit that work. This work does not publish a tag or release. Demo previews never query or install releases. See the [Korean maintenance guide](MAINTAINING.md#community-upstream) for the detailed process.
+Publish a new tag only for an approved, verified deployment after reviewing prior community releases, release notes and database compatibility. Update VERSION and add `docs/releases/vX.Y.Z.md`, then commit the intended changes before tagging. Uncommitted changes are not included in a tag. Check the [release record](docs/complete/2026-10-27-v1.0.0-release.md) for actual publication and verification results. Demo previews never query or install releases. See the [Korean maintenance guide](MAINTAINING.md#community-upstream) for the detailed process.
 
 ---
 
@@ -371,35 +371,38 @@ ones we cannot fix, so they go on the allowlist with a reason and are excluded f
 
 ## 9. The release pipeline
 
-Pushing a version tag (`v*`) makes [`.github/workflows/release.yml`](.github/workflows/release.yml)
-build binaries for five platforms and, when a condition is met, a multi-architecture Docker image.
-This fork has never cut a release tag, so this workflow has never run. This section therefore records
-what the pipeline assumes and produces, and whether those assumptions match the current repository
-structure. Because pushing a tag creates a GitHub Release on the public repository, cut a release only
-after the publishing decision is made.
+Pushing a stable version tag matching `version/VERSION` makes
+[`.github/workflows/release.yml`](.github/workflows/release.yml) validate and build five platform
+packages and a multi-architecture Docker image, then publish the GitHub Release. Manual execution
+validates and packages without publishing a release or image. See the
+[release record](docs/complete/2026-10-27-v1.0.0-release.md) for actual results.
 
 ### 9.1 How to cut a release
 
-Pushing a tag that starts with `v` fires the workflow.
+After validation and publication approval, tag the intended commit. Do not replace an existing tag.
+The tag must exactly match the version file and have a corresponding release notes file.
 
 ```bash
-git tag v0.3.15
-git push origin v0.3.15
+git tag -a v1.0.0 -m "ARTEX Community v1.0.0"
+git push origin v1.0.0
 ```
 
 ### 9.2 What the pipeline does
 
-The workflow is split into five jobs.
+The workflow is split into six jobs.
 
-- **frontend.** Statically exports the frontend once (`web/out`) and uploads that output as the
+- **validate.** Checks the community repository, stable version, release notes and upstream metadata.
+- **backend.** Runs offline domain, OAuth and recovery tests, ChatGPT race checks, isolated PostgreSQL
+  integration tests and authentication migration tests. Detailed authentication fixture logs remain private.
+- **frontend.** Runs unit tests and five-language key checks, statically exports the frontend once (`web/out`), and uploads that output as the
   `web-dist` artifact. The binaries job below downloads and reuses this output per target.
 - **binaries.** Cross-compiles five targets (linux amd64/arm64, darwin amd64/arm64, windows amd64) and
   packages a zip per target. On the linux amd64 binary it runs an `artex -h` smoke test to confirm the
-  binary actually runs.
+  binary actually runs and checks `artex -version` against the declared version.
 - **release.** Gathers all zips, generates a `SHA256SUMS` checksum file, and creates a GitHub Release
-  with the zips and the checksum attached.
+  after the binary and image jobs succeed, with zips, checksums, `VERSION` and `upstream.json` attached.
 - **docker.** Takes the linux binaries cross-compiled by binaries, builds a multi-architecture
-  (amd64/arm64) image, and pushes it to GitHub Container Registry as `ghcr.io/jiwoochris/artex-global`
+  (amd64/arm64) image, and pushes it to GitHub Container Registry as `ghcr.io/hdhdev-droid/artex-community`
   with the release tag and `latest`. It logs in with the workflow's built-in `GITHUB_TOKEN` (job
   permission `packages: write`), so no extra secrets are needed.
 
@@ -415,7 +418,7 @@ current repository structure by reproducing the binaries job locally.
 - **Binary and package paths.** `build.sh --target <os>/<arch>` produces the `dist/artex-<os>-<arch>/artex`
   binary and a zip package under `dist/`. The zip contains the binary together with a start script
   (`start.sh` on Linux/macOS, `start.bat` on Windows), `skills/`, `config.example.json`, and
-  `README.md`.
+  `README.md`, `VERSION`, `upstream.json` and authentication deployment guidance.
 - **Copying the binary into the Docker image.** The binaries job uploads the linux binary separately as
   the `bin-linux-<arch>` artifact, and the docker job receives it as `dist/<arch>/artex`. The
   `COPY dist/${TARGETARCH}/artex` in [`Dockerfile`](Dockerfile) picks up that path via the `TARGETARCH`
@@ -424,8 +427,8 @@ current repository structure by reproducing the binaries job locally.
 
 ### 9.4 The Docker image namespace
 
-Images are published to `ghcr.io/jiwoochris/artex-global`, a namespace this fork owns, and
-`docker-compose.yml` pulls that image (decided 2026-10-11, `work/DECISIONS-FOR-JIWOO.md`, item 8).
+Images are published to `ghcr.io/hdhdev-droid/artex-community`, and
+`docker-compose.yml` uses that image with `ARTEX_TAG` selecting a version (default `latest`).
 Upstream's `autumn27/artex` has been taken down from Docker Hub and this fork has no push access to
 it, so it is no longer used. A GHCR package may be created as private on its first publish, so after
 the first release check in the package settings that it is public; if it is private,
@@ -445,7 +448,7 @@ rm -rf server/webui/dist && mkdir -p server/webui/dist && cp -a web/out/. server
 docker run --rm -v "$PWD":/app -w /app \
   -e ARTEX_SKIP_FRONTEND=1 -e ARTEX_SKIP_NPM_CI=1 \
   -e ARTEX_COMPRESS=0 -e ARTEX_PACKAGE=1 -e ARTEX_PACKAGE_DIR=dist \
-  -e ARTEX_BUILD_VERSION=v0.0.0-local \
+  -e ARTEX_BUILD_VERSION=v1.0.0 \
   golang:1.26 bash -c 'apt-get update && apt-get install -y zip && ./build.sh --target linux/amd64'
 # 4) Confirm the outputs: dist/artex-linux-amd64/artex · dist/*.zip · dist/SHA256SUMS
 ```

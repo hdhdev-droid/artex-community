@@ -53,7 +53,7 @@
 상류 코드 검토 대상은 `jiwoochris/artex-global`로 유지하며, **설치·자동 업데이트 대상은 `hdhdev-droid/artex-community`의 정식 릴리스만** 사용합니다.
 업데이트 원본은 `selfupdate/github.go`의 `Repo` 상수이고 사용자 설정으로 변경하지 않습니다.
 
-- 현재 community 기준 버전은 `version/VERSION`의 **`1.0.0`**입니다. 발행 태그는 반드시 이 파일과 같은 `vMAJOR.MINOR.PATCH`여야 합니다. 수정은 PATCH, 호환 기능 추가는 MINOR, 호환성이 깨지는 변경은 MAJOR를 올립니다. `v1.0.0`은 발행 준비된 기준이며 아직 태그를 발행하지 않았습니다.
+- 현재 community 기준 버전은 `version/VERSION`의 **`1.0.0`**입니다. 발행 태그는 반드시 이 파일과 같은 `vMAJOR.MINOR.PATCH`여야 합니다. 수정은 PATCH, 호환 기능 추가는 MINOR, 호환성이 깨지는 변경은 MAJOR를 올립니다. 실제 발행·검증 상태는 [릴리스 기록](docs/complete/2026-10-27-v1.0.0-release.md)을 확인합니다.
 - `version/VERSION`과 `version/upstream.json`을 빌드·화면·서버가 공유합니다. 태그와 VERSION이 다르면 CI가 중단됩니다. `web/package.json`의 버전은 프런트엔드 패키지 메타데이터이며 앱 업데이트 판정에 사용하지 않습니다.
 - `.github/workflows/release.yml`은 community 저장소에서만 발행하며, `v*` 태그 중 세 자리 정식 버전 형식이 아닌 태그(예: `v1.0.0-rc.1`)는 거부합니다. 프런트엔드·5개 플랫폼 패키지·Docker 이미지 빌드 후 ZIP과 `SHA256SUMS`를 GitHub Release에 게시합니다.
 - 태그에서 `v`를 뺀 값이 실행 파일의 `main.version`에 들어갑니다. CI에서 Linux 실행 파일의 `-version` 출력과 태그 일치 여부를 확인합니다. `-version`은 DB·업데이트 부트스트랩·서버 시작 전에 종료합니다.
@@ -66,7 +66,7 @@
 앱은 community의 최신 정식 릴리스와 현재 실행 파일의 숫자 버전을 비교합니다. 더 높은 버전과 해당 OS/CPU 패키지·체크섬이 있어야 설치할 수 있습니다. 프로그램 교체는 DB 롤백을 제공하지 않으며 Docker 컨테이너 내부 업데이트도 이미지 자체를 변경하지 않습니다.
 샘플 화면은 `1.0.0-demo`와 community 기준 버전·상류 출처를 표시하며 외부 릴리스 조회·설치·롤백은 실행하지 않습니다. 정확한 포크 기준은 `version/upstream.json`의 `v0.3.15-global.1-9-gfdfb7a1`입니다. 원본 ARTEX `0.3.15` 기반 표시는 글로벌판 변경 기록에 근거합니다.
 
-다음 버전은 VERSION 갱신 → 해당 `docs/releases/vX.Y.Z.md` 작성 → 변경 커밋 → 동일 태그 발행 순서로 관리합니다. 현재 작업 트리에는 미커밋 기능이 있으므로 기존 HEAD에 바로 태그를 붙이면 해당 기능이 릴리스에 포함되지 않습니다.
+다음 버전은 VERSION 갱신 → 해당 `docs/releases/vX.Y.Z.md` 작성 → 변경 커밋 → 동일 태그 발행 순서로 관리합니다. 미커밋 변경은 태그에 포함되지 않으므로 발행 대상 커밋을 확인합니다.
 
 ---
 
@@ -396,14 +396,14 @@ DOWN(404·410·5xx·연결 오류, 깨졌을 가능성 높음).
 
 버전 원본은 `version/VERSION`이며 현재 정식 릴리스 대상은 **1.0.0**입니다.
 상류 기준은 `version/upstream.json`, 릴리스 본문은 `docs/releases/v1.0.0.md`입니다.
-로컬 검증과 실제 GitHub 발행 상태는 [완료 기록](docs/complete/2026-10-24-release-readiness.md)에 구분합니다.
+로컬 검증은 [준비 기록](docs/complete/2026-10-24-release-readiness.md), 실제 GitHub 발행 상태는 [릴리스 기록](docs/complete/2026-10-27-v1.0.0-release.md)에 구분합니다.
 
 ### 발행 전 검증
 
 1. 작업 변경을 검토하고 커밋합니다. 인증 파일·`.env`·`.secrets`·`auth`·`work`·빌드 산출물은 커밋하지 않습니다.
 2. GitHub Actions의 **release → Run workflow**로 해당 브랜치를 검증합니다.
    수동 실행은 테스트와 5개 플랫폼 ZIP을 만들며 GitHub Release나 GHCR 이미지는 공개하지 않습니다.
-3. 실제 OAuth 로그인·모델 선택·연결 테스트를 수행하고 운영 인증 백업과 이전 절차를 확인합니다.
+3. 실제 OAuth 로그인·외부 연결 검증의 수행 여부를 기록합니다. 운영 적용 전에는 해당 환경에서 모델 선택·연결 테스트를 수행하고 운영 인증 백업과 이전 절차를 확인합니다.
 4. 발행할 커밋에 `v1.0.0` 태그를 붙이고 push하면 자동 발행합니다.
    기존 태그를 덮어쓰지 않습니다. 다음 릴리스에서는 버전 파일·변경 기록을 함께 올립니다.
 

@@ -144,7 +144,7 @@ docker compose up -d          # artex 이미지 + postgres 를 함께 기동
 기존 사용자는 **시스템 설정 → 시작 안내**로 다시 열 수 있습니다. 모델 설정에는
 OpenRouter OAuth와 ChatGPT 구독 연결을 추가했으며, 연결 후 저장된 프로파일을 직접 활성화합니다.
 ChatGPT 로그인은 ARTEX를 실행하는 컴퓨터의 localhost에서 진행하고, 인증 콜백만
-`http://127.0.0.1:8789/auth/callback`을 사용합니다. 이 변경의 빌드·실계정 검증은 아직 수행하지 않았습니다.
+`http://127.0.0.1:8789/auth/callback`을 사용합니다. 빌드·오프라인 검증과 실제 OAuth 로그인 검증의 범위는 [릴리스 기록](docs/complete/2026-10-27-v1.0.0-release.md)에 구분합니다.
 자세한 실행 조건과 검증 범위는 [로컬 개발 환경](docs/local-development.md#최초-화면-설정)을 참고하십시오.
 
 **데이터베이스**(`config.json`, 또는 환경 변수 `ARTEX_PG_DSN` 로 덮어쓰기):
