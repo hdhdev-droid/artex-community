@@ -6,6 +6,12 @@ This document records the changes that the ARTEX global edition (this fork) adds
 
 The upstream ARTEX project's per-version release history (0.3.x and earlier) and contributor list are preserved verbatim in Chinese in [`CHANGELOG.zh.md`](CHANGELOG.zh.md). As with `README.zh.md`, the original text is kept unchanged so that it stays easy to compare against upstream changes. The detailed content and rationale for each change can be found in the repository's commit history.
 
+## [1.0.1] · Localization fixes
+
+- Apply existing built-in agent translations to MCP and skill visibility lists and agent deletion messages.
+- Correct the default Auto description and synchronize the browser title and description with the selected language. Custom names and descriptions are preserved.
+- See the [v1.0.1 release notes](docs/releases/v1.0.1.md) for scope and verification.
+
 ## [1.0.0] · Community release preparation
 
 The community version is now `1.0.0`, based on artex-global commit `fdfb7a17b7da5e2de716c0e98475ec77a41c64c6` (nine commits after `v0.3.15-global.1`). The global changelog records original ARTEX `0.3.15` as its basis.
