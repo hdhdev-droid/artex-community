@@ -52,6 +52,51 @@ Windows Docker Desktop에서 기본 기동을 확인했으며 Linux·Intel Mac·
 호스트 포트는 루프백에만 바인딩한다. 기존 Redis는 연결하거나 변경하지 않는다.
 앱에 Redis 의존성이 없으므로 새 Redis를 추가하지 않는다.
 
+## 기존 로컬 데이터로 정식 릴리스 실행
+
+이미 최초 설정을 마친 개발 설치는 `docker-compose.local-release.yml`을 추가해
+GitHub에서 발행한 **v1.0.0** 이미지를 사용할 수 있다. 이미지 태그와 다이제스트를 고정하며
+로컬 소스 빌드나 Next 개발 서버 없이 이미지에 내장된 화면을 제공한다. Compose 2.24.4 이상이 필요하다.
+
+```sh
+docker compose -f docker-compose.dev.yml -f docker-compose.local-release.yml pull backend
+docker compose -f docker-compose.dev.yml stop -t 30 web backend
+docker compose -f docker-compose.dev.yml -f docker-compose.local-release.yml up -d --no-deps backend
+```
+
+기존 작업이 끝난 것을 확인하고 앱만 교체한다. PostgreSQL·진단 서비스와
+`pgdata`·`data`·`runtime` 볼륨을 유지한다. `runtime`을 `/app/auth`에 연결하여
+기존 JWT·ChatGPT 인증 파일을 그대로 사용하고 이미지의 `/app/artex`를 가리지 않는다.
+인증 볼륨에 JWT가 없으면 기동을 중단한다. 초기화·리셋·볼륨 삭제는 하지 않는다.
+앱의 정상 기동에 따른 스키마·내장 설정 확인은 수행된다.
+개발 이미지에서 저장한 `/usr/bin/python3` 경로가 없으면 정식 이미지의 Python에 연결하여
+기존 사용자 설정을 유지한다.
+
+화면은 계속 `http://localhost:5173`이고 `http://localhost:8787`에서도 같은 릴리스 화면에 접속할 수 있다.
+기존 브라우저 로그인은 동일한 주소와 JWT를 유지하므로 계속 사용할 수 있다.
+정식 버전은 `/api/health`와 시스템 설정에서 `1.0.0`으로 표시한다.
+진단 서비스는 기존 로컬 runner를 유지하며, LLM·Splunk 등 외부 연결은 자동으로 시험하지 않는다.
+
+이 구성을 유지하려면 앞으로도 두 Compose 파일을 함께 지정한다. 기본 개발 시작 스크립트는
+소스 개발 모드로 돌아가므로 정식 이미지 실행 중에는 사용하지 않는다.
+개발 모드로 되돌릴 때는 backend를 중지하고 기본 `docker-compose.dev.yml`로
+`up -d --no-deps backend web`을 실행한다. 인증·데이터 볼륨은 같은 것을 사용한다.
+
+### 미번역 수정 로컬 이미지
+
+2026-10-27 미번역 수정 빌드는 공개 v1.0.0 이미지를 바탕으로 화면과 실행 파일을
+로컬에서 다시 빌드한 `artex-community:1.0.0-i18n.1`이다. 실행 버전은
+`1.0.0+local.i18n.1`로 구분하며 공개 릴리스 태그는 변경하지 않는다.
+이 로컬 이미지가 있는 환경에서는 다음 명령으로 같은 데이터·인증 볼륨을 사용한다.
+
+```sh
+docker compose -f docker-compose.dev.yml -f docker-compose.local-release.yml -f docker-compose.local-patch.yml up -d --no-deps --no-build backend
+```
+
+`local-patch.yml`은 외부 이미지 다운로드를 금지하며 검증한 로컬 이미지가 없으면 실패한다.
+정식 v1.0.0으로 복귀하려면 세 번째 파일을 제외하고 앞 절의 실행 명령을 사용한다.
+로컬 수정 빌드는 정식 버전으로 오인하여 덮어쓰지 않도록 앱의 한 번 클릭 업데이트가 제한된다.
+
 ## 최초 화면 설정
 
 `http://localhost:5173/setup`에서 관리자 비밀번호를 직접 설정한다.

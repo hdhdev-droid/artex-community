@@ -16,8 +16,8 @@
     "description": "领取一条意图执行，把发现的事实/漏洞写回知识图谱后停止。"
   },
   "auto": {
-    "name": "pentest",
-    "description": "worker"
+    "name": "Auto",
+    "description": "平台操作助手：用工具管理任务(建/看/暂停/给提示)与资产，并可创建/修改 skill、自定义工具、MCP。"
   },
   "pentest": {
     "name": "渗透测试",

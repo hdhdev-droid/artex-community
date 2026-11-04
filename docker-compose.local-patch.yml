@@ -1,0 +1,6 @@
+# Apply after dev.yml and local-release.yml to run the verified local UI patch.
+# This tag is local only; the published v1.0.0 image remains unchanged.
+services:
+  backend:
+    image: artex-community:1.0.0-i18n.1
+    pull_policy: never

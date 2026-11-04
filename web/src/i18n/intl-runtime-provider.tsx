@@ -5,6 +5,8 @@ import * as React from "react";
 
 import { NextIntlClientProvider } from "next-intl";
 
+import { META_BY_LOCALE } from "@/config/app-config";
+
 import enMessages from "../../messages/en.json";
 import esMessages from "../../messages/es.json";
 import jaMessages from "../../messages/ja.json";
@@ -42,6 +44,9 @@ export function IntlRuntimeProvider({ children }: Readonly<{ children: ReactNode
   // 직접 넘긴다. 빠지면 next-intl 이 프리렌더 중 ENVIRONMENT_FALLBACK 오류를 남긴다.
   return (
     <NextIntlClientProvider locale={locale} messages={MESSAGES[locale]} timeZone={TIME_ZONE}>
+      {/* React hoists these into head. A separate static Next title would overwrite them on navigation. */}
+      <title>{META_BY_LOCALE[locale].title}</title>
+      <meta name="description" content={META_BY_LOCALE[locale].description} />
       {children}
     </NextIntlClientProvider>
   );

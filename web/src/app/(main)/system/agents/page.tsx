@@ -46,7 +46,7 @@ function AgentGridCard({ agent, onOpen, onDeleted }: { agent: Agent; onOpen: () 
   async function del() {
     try {
       await api.deleteAgent(agent.key);
-      toast.success(t("deleted", { name: agent.name }));
+      toast.success(t("deleted", { name: labels.name(agent) }));
       onDeleted();
     } catch (e) {
       toast.error(t("deleteFailed", { msg: (e as Error).message }));
@@ -101,7 +101,7 @@ function AgentGridCard({ agent, onOpen, onDeleted }: { agent: Agent; onOpen: () 
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>{t("deleteTitle", { name: agent.name })}</AlertDialogTitle>
+              <AlertDialogTitle>{t("deleteTitle", { name: labels.name(agent) })}</AlertDialogTitle>
               <AlertDialogDescription>{t("deleteDesc")}</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

@@ -1,0 +1,28 @@
+# Use together with docker-compose.dev.yml for an existing local installation.
+# Keep the existing database, runner and volumes; serve the released UI on 5173.
+services:
+  backend:
+    build: !reset null
+    image: ghcr.io/hdhdev-droid/artex-community:v1.0.0@sha256:93f525020c73f19bca050584c752920969173de7f3324ec2efe27d46be28f41a
+    working_dir: /app
+    entrypoint: ["sh", "/usr/local/bin/artex-local-release.sh"]
+    command: !reset []
+    environment:
+      ARTEX_AUTH_DIR: /app/auth
+      ARTEX_SKILL_DIR: /app/skills
+    volumes: !override
+      # Mount the old runtime under auth so it cannot hide the released binary.
+      - runtime:/app/auth
+      - data:/app/data
+      - ./.secrets/dev:/run/secrets:ro
+      - ./scripts/local-release-backend.sh:/usr/local/bin/artex-local-release.sh:ro
+    ports: !override
+      - "127.0.0.1:5173:8787"
+      - "127.0.0.1:8787:8787"
+      - "127.0.0.1:8788:8788"
+      - "127.0.0.1:8789:8789"
+    restart: unless-stopped
+
+  web:
+    # The release binary already contains the UI. Stop the running dev web first.
+    profiles: ["source-web"]
